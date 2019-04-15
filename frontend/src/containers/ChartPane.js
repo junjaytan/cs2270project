@@ -4,6 +4,7 @@ import * as selectors from '../reducer';
 import * as actions from '../actions';
 import TSChart from '../components/TSChart';
 import OverviewChart from '../components/OverviewChart';
+import * as _ from 'lodash';
 
 export class ChartPane extends Component{
 
@@ -15,11 +16,40 @@ export class ChartPane extends Component{
     }
   }
 
+  // transform query return to x, y coordinates
+  transformedData(data, id) {
+    var newData = []
+    var startDate = new Date(data.start_date)
+    var endDate = new Date(data.end_date)
+    var totTime = endDate - startDate
+    var n = data.json_agg.length
+    var spanLength = totTime / (n -1)
+
+    var dt = startDate
+    _.forEach(data.json_agg, (val) => {
+      newData.push({"x": dt, "y": val})
+      dt = new Date(dt.valueOf() + spanLength)
+    })
+
+    var dataObj = {"data": newData, "id": `tsdata-`+id}
+
+    return dataObj
+  }
+
   chartMinis() {
+    var count = 0
+    var data = []
+    _.forEach(this.props.data, (val) => {
+      data.push(this.transformedData(val, count))
+      count += 1
+    })
+
+    console.log(data)
+
     return (
-      this.props.data.map((val) =>
-        <div className="chart-mini">
-          <TSChart data={val} />
+      data.map((val) =>
+        <div className="chart-mini" key={val.id} >
+          <TSChart data={val.data} id={val.id}/>
         </div>
       )
     )
