@@ -75,8 +75,15 @@ SELECT * FROM
 filter_segments(NULL::public.sinewaves_data, 'my_datetime', 'sine1_value', 8.5, 10) 
 LIMIT 50;
 
--- We can then aggregate segments as follows:
---TODO:
+-- Finally, query to return the data in a json array based on some top-k
+-- condition
+SELECT segment_start_ts, MAX(cur_ts) AS segment_end_ts, 
+COUNT(*) AS number_points,
+json_agg(value_to_filter ORDER BY cur_ts) AS json_data
+FROM filter_segments(NULL::public.sinewaves_data, 'my_datetime', 'sine1_value', 8.5, 10) 
+GROUP BY segment_start_ts
+ORDER BY segment_end_ts, AVG(value_to_filter) DESC
+LIMIT 10;
 
 -- We can delete the function with this command
 DROP FUNCTION filter_segments;
