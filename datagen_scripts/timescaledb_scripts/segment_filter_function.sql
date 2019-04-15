@@ -32,8 +32,11 @@ valuecol_to_filter TEXT, min_value NUMERIC, max_value NUMERIC)
 $$
 BEGIN
 RETURN QUERY EXECUTE 
-format('SELECT %s, LAG(%s) OVER (ORDER BY %s) as prev_row_datetime, %s FROM %s',
-datecol, datecol, datecol, valuecol_to_filter, pg_typeof(_tbl));
+format('SELECT * FROM (SELECT %s, LAG(%s) OVER (ORDER BY %s)'
+' as prev_row_datetime, %s FROM %s) AS data_with_prev_rowtime '
+'WHERE %s >= %s AND %s <= %s',
+datecol, datecol, datecol, valuecol_to_filter, pg_typeof(_tbl),
+valuecol_to_filter, min_value, valuecol_to_filter, max_value);
 END
 $$  LANGUAGE plpgsql;
 
