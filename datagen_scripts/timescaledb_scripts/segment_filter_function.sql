@@ -28,22 +28,77 @@ LIMIT 10;
 -- that we are filtering on)
 CREATE OR REPLACE FUNCTION filter_segments(_tbl ANYELEMENT, datecol TEXT, 
 valuecol_to_filter TEXT, min_value NUMERIC, max_value NUMERIC)
-  RETURNS TABLE (cur_ts TIMESTAMP, prev_row_ts TIMESTAMP, value_to_filter NUMERIC) AS
+  RETURNS TABLE (segment_start_ts TIMESTAMP, cur_ts TIMESTAMP, 
+                 prev_row_ts TIMESTAMP, value_to_filter NUMERIC) AS
 $$
+DECLARE
+  -- This is a temp variable we use to store as we iterate
+  loop_previous_cur_ts TIMESTAMP := NULL;
+  --segment_start_ts TIMESTAMP := NULL;
 BEGIN
-RETURN QUERY EXECUTE 
-format('SELECT * FROM (SELECT %s, LAG(%s) OVER (ORDER BY %s)'
-' as prev_row_datetime, %s FROM %s) AS data_with_prev_rowtime '
-'WHERE %s >= %s AND %s <= %s',
-datecol, datecol, datecol, valuecol_to_filter, pg_typeof(_tbl),
-valuecol_to_filter, min_value, valuecol_to_filter, max_value);
+  FOR cur_ts, prev_row_ts, value_to_filter IN 
+  EXECUTE 
+    format('SELECT * FROM (SELECT %s, LAG(%s) OVER (ORDER BY %s)'
+           ' as prev_row_datetime, %s FROM %s) AS data_with_prev_rowtime '
+           'WHERE %s >= %s AND %s <= %s ORDER BY %s',
+           datecol, datecol, datecol, valuecol_to_filter, pg_typeof(_tbl),
+           valuecol_to_filter, min_value, valuecol_to_filter, max_value,
+           datecol)
+    LOOP
+      -- First timestamp in all time!
+      IF prev_row_ts IS NULL THEN 
+        segment_start_ts := cur_ts;
+        loop_previous_cur_ts := cur_ts;
+      ELSE
+        -- if we've not yet populated the temp var for previous row's cur_ts
+        IF loop_previous_cur_ts IS NULL THEN
+          -- This is the first segment we've encountered
+          segment_start_ts := cur_ts;
+          loop_previous_cur_ts := cur_ts;
+        ELSIF prev_row_ts = loop_previous_cur_ts THEN
+          -- Is a continuation of previous segment!
+          loop_previous_cur_ts := cur_ts;
+        ELSE
+          -- Is a new segment because there are points not in the filter range
+          -- between this and the previous value in the filter range
+          segment_start_ts := cur_ts;
+          loop_previous_cur_ts := cur_ts;
+        END IF;
+      END IF;
+      RETURN NEXT;
+    END LOOP;
 END
 $$  LANGUAGE plpgsql;
 
 -- This function can be run as follows
 SELECT * FROM 
 filter_segments(NULL::public.sinewaves_data, 'my_datetime', 'sine1_value', 8.5, 10) 
-LIMIT 10;
+LIMIT 50;
+
+-- We can then aggregate segments as follows:
+--TODO:
 
 -- We can delete the function with this command
 DROP FUNCTION filter_segments;
+
+
+/**
+-- Some other useful code for reference
+
+--Example of looping on each row.
+CREATE OR REPLACE FUNCTION testfunc(_tbl ANYELEMENT)
+  RETURNS SETOF ANYELEMENT AS
+$$
+DECLARE
+	row_data record;
+BEGIN
+  FOR row_data IN EXECUTE format('SELECT * FROM %s', pg_typeof(_tbl))
+  LOOP
+    RETURN NEXT row_data;
+  END LOOP;
+END;
+
+SELECT * FROM testfunc(NULL::public.sinewaves_data) LIMIT 10;
+
+
+*/
