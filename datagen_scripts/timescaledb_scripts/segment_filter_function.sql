@@ -78,14 +78,15 @@ CREATE OR REPLACE FUNCTION filter_segments(_tbl ANYELEMENT, datecol TEXT,
 valuecol_to_filter TEXT, valuecol_to_passthru TEXT, 
 min_value NUMERIC, max_value NUMERIC)
   RETURNS TABLE (segment_start_ts TIMESTAMP, cur_ts TIMESTAMP, 
-                 prev_row_ts TIMESTAMP, value_to_filter NUMERIC) AS
+                 prev_row_ts TIMESTAMP, value_to_filter NUMERIC, 
+                 value_to_passthru NUMERIC) AS
 $$
 DECLARE
   -- This is a temp variable we use to store as we iterate
   loop_previous_cur_ts TIMESTAMP := NULL;
   --segment_start_ts TIMESTAMP := NULL;
 BEGIN
-  FOR cur_ts, prev_row_ts, value_to_filter, valuecol_to_passthru IN 
+  FOR cur_ts, prev_row_ts, value_to_filter, value_to_passthru IN 
   EXECUTE 
     format('SELECT * FROM (SELECT %s, LAG(%s) OVER (ORDER BY %s)'
            ' as prev_row_datetime, %s, %s FROM %s) AS data_with_prev_rowtime '
@@ -122,10 +123,16 @@ END
 $$  LANGUAGE plpgsql;
 
 
--- This function can be run as follows
+-- The first function can be run as follows:
 SELECT * FROM 
 filter_segments(NULL::public.ecg_data, 'ecg_datetime', 'anomaly_likelihood', 78, 300) 
 LIMIT 50;
+
+-- The second function can be run as follows:
+SELECT * FROM 
+filter_segments(NULL::public.ecg_data, 'ecg_datetime', 'anomaly_likelihood', 
+                'ecg_mv', 78, 300) 
+LIMIT 5;
 
 -- or if we also want to pass through the raw signal
 SELECT * FROM 
