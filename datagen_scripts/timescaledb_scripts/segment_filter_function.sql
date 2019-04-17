@@ -19,8 +19,8 @@ ORDER BY my_datetime
 LIMIT 10;
 
 
--- A function that performs this but is missing the filter
--- is as follows
+-- A function that performs this and only passes through the 
+-- filtered value field (e.g., the detector's raw values)
 -- Note that plpgsql requires us to pre-specify the return types
 -- so we might want an overloaded function that accepts another
 -- numeric field that contains the raw time-series data (as opposed
@@ -70,9 +70,68 @@ BEGIN
 END
 $$  LANGUAGE plpgsql;
 
+
+-- Same as above, but overloaded to pass through a second
+-- numeric field, which is typically the raw sigal that will
+-- be plotted.
+CREATE OR REPLACE FUNCTION filter_segments(_tbl ANYELEMENT, datecol TEXT, 
+valuecol_to_filter TEXT, valuecol_to_passthru TEXT, 
+min_value NUMERIC, max_value NUMERIC)
+  RETURNS TABLE (segment_start_ts TIMESTAMP, cur_ts TIMESTAMP, 
+                 prev_row_ts TIMESTAMP, value_to_filter NUMERIC) AS
+$$
+DECLARE
+  -- This is a temp variable we use to store as we iterate
+  loop_previous_cur_ts TIMESTAMP := NULL;
+  --segment_start_ts TIMESTAMP := NULL;
+BEGIN
+  FOR cur_ts, prev_row_ts, value_to_filter, valuecol_to_passthru IN 
+  EXECUTE 
+    format('SELECT * FROM (SELECT %s, LAG(%s) OVER (ORDER BY %s)'
+           ' as prev_row_datetime, %s, %s FROM %s) AS data_with_prev_rowtime '
+           'WHERE %s >= %s AND %s <= %s ORDER BY %s',
+           datecol, datecol, datecol, valuecol_to_filter, 
+           valuecol_to_passthru,
+           pg_typeof(_tbl),
+           valuecol_to_filter, min_value, valuecol_to_filter, max_value,
+           datecol)
+    LOOP
+      -- First timestamp in all time!
+      IF prev_row_ts IS NULL THEN 
+        segment_start_ts := cur_ts;
+        loop_previous_cur_ts := cur_ts;
+      ELSE
+        -- if we've not yet populated the temp var for previous row's cur_ts
+        IF loop_previous_cur_ts IS NULL THEN
+          -- This is the first segment we've encountered
+          segment_start_ts := cur_ts;
+          loop_previous_cur_ts := cur_ts;
+        ELSIF prev_row_ts = loop_previous_cur_ts THEN
+          -- Is a continuation of previous segment!
+          loop_previous_cur_ts := cur_ts;
+        ELSE
+          -- Is a new segment because there are points not in the filter range
+          -- between this and the previous value in the filter range
+          segment_start_ts := cur_ts;
+          loop_previous_cur_ts := cur_ts;
+        END IF;
+      END IF;
+      RETURN NEXT;
+    END LOOP;
+END
+$$  LANGUAGE plpgsql;
+
+
 -- This function can be run as follows
 SELECT * FROM 
-filter_segments(NULL::public.sinewaves_data, 'my_datetime', 'sine1_value', 8.5, 10) 
+filter_segments(NULL::public.ecg_data, 'ecg_datetime', 'anomaly_likelihood', 78, 300) 
+LIMIT 50;
+
+-- or if we also want to pass through the raw signal
+SELECT * FROM 
+filter_segments(
+  NULL::public.ecg_data, 'ecg_datetime', 'anomaly_likelihood', 'ecg_mv', 
+  78, 300) 
 LIMIT 50;
 
 -- Finally, query to return the data in a json array based on some top-k
@@ -80,14 +139,14 @@ LIMIT 50;
 SELECT segment_start_ts, MAX(cur_ts) AS segment_end_ts, 
 COUNT(*) AS number_points,
 json_agg(value_to_filter ORDER BY cur_ts) AS json_data
-FROM filter_segments(NULL::public.sinewaves_data, 'my_datetime', 'sine1_value', 8.5, 10) 
+FROM filter_segments(NULL::public.ecg_data, 'ecg_datetime', 'anomaly_likelihood', 78, 300) 
 GROUP BY segment_start_ts
-ORDER BY segment_end_ts, AVG(value_to_filter) DESC
+ORDER BY number_points DESC -- segment_end_ts, AVG(value_to_filter) DESC
 LIMIT 10;
 
 -- We can delete the function with this command
-DROP FUNCTION filter_segments;
-
+DROP FUNCTION filter_segments(ANYELEMENT, TEXT, TEXT, NUMERIC, NUMERIC);
+DROP FUNCTION filter_segments(ANYELEMENT, TEXT, TEXT, TEXT, NUMERIC, NUMERIC);
 
 /**
 -- Some other useful code for reference
