@@ -33,7 +33,7 @@ export default class TSChart extends Component {
         "encoding": {
           "x": {
             "field": "x",
-            "type": "quantitative",
+            "type": "temporal",
            },
           "y": {
             "field": "y",
@@ -45,7 +45,7 @@ export default class TSChart extends Component {
           "tooltip" : [
             {
               "field": "x",
-              "type": "quantitative",
+              "type": "temporal",
               "title": "Timestamp"
             },
             {

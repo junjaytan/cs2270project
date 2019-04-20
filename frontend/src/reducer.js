@@ -3,9 +3,10 @@ import Immutable from 'seamless-immutable';
 const initialState = Immutable({
   selectedDataset: "",
   datasets: [],
+  stats: {},
   queryType: { query: "", symbol: "", fields: []},
   minVal: 0,
-  maxVal: 0,
+  maxVal: 300,
   error: "",
   data: []
 });
@@ -26,6 +27,10 @@ export default function reduce(state = initialState, action = {}) {
     case 'CHANGE_DATASETS':
       return state.merge({
         datasets: action.data
+      });
+    case 'CHANGE_STATS':
+      return state.merge({
+        stats: action.data
       });
     case 'CHANGE_QUERY_TYPE':
       return state.merge({
@@ -58,6 +63,10 @@ export function getSelectedDataset(state) {
 
 export function getDatasets(state) {
   return state.datasets;
+}
+
+export function getStats(state) {
+  return state.stats;
 }
 
 export function getQueryType(state) {

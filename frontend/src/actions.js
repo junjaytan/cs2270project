@@ -18,6 +18,10 @@ export function fetchDatasets(data) {
   return({ type: 'CHANGE_DATASETS', data})
 }
 
+export function fetchStats(data) {
+  return({ type: 'CHANGE_STATS', data})
+}
+
 export function searchData(data) {
   return({ type: 'CHANGE_DATA', data})
 }

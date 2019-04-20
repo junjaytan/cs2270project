@@ -12,6 +12,8 @@ class ChartOptions extends Component {
 
     // if the datasets aren't loaded, go fetch it
     if (this.props.datasets.length === 0) this.props.fetchDatasets();
+
+    this.changeDataset = this.changeDataset.bind(this);
   }
 
   queryButton(q) {
@@ -27,9 +29,9 @@ class ChartOptions extends Component {
     return (
       <div className="query-fields">
         { this.props.queryType.fields.includes("min") &&
-          <div className="input-group">
+          <div className="input-group input-group-sm my-2">
             <div className="input-group-prepend">
-              <span className="input-group-text" id="min">min value</span>
+              <span className="input-group-text" id="min">≥</span>
             </div>
             <input
               type="text"
@@ -43,9 +45,9 @@ class ChartOptions extends Component {
         }
         { this.props.queryType.fields.length === 2 && <p className="my-0 py-0">AND</p> }
         { this.props.queryType.fields.includes("max") &&
-          <div className="input-group">
+          <div className="input-group input-group-sm my-2">
             <div className="input-group-prepend">
-              <span className="input-group-text" id="max">max value</span>
+              <span className="input-group-text" id="max">≤</span>
             </div>
             <input
               type="text"
@@ -71,6 +73,7 @@ class ChartOptions extends Component {
     if (this.props.selectedDataset) {
       return (
         <div className="query-selection">
+          <br/>
           <p>Selct parameters:</p>
 
           <div className="btn-group" role="group" aria-label="Query Type">
@@ -85,12 +88,21 @@ class ChartOptions extends Component {
 
   querySearch() {
     if (this.props.queryType.query) {
+      let min = this.props.minVal
+      if (this.props.queryType.query === "le") {
+        min = 0
+      }
+
+      let max = this.props.maxVal
+      if (this.props.queryType.query === "ge") {
+        max = 300
+      }
       return (
         <button
           type="button"
           className="btn px-2 py-0 mx-1 btn-secondary clear-btn"
           value={this.props.value}
-          onClick={ () => this.props.searchData(this.props.selectedDataset, this.props.queryType, this.props.minVal, this.props.maxVal) }
+          onClick={ () => this.props.searchData(this.props.selectedDataset, this.props.stats, min, max) }
           >
           Search
         </button>
@@ -98,13 +110,29 @@ class ChartOptions extends Component {
     }
   }
 
+  changeDataset(dataset) {
+    this.props.changeSelectedDataset(dataset);
+    this.props.fetchStats(dataset);
+  }
+
   render() {
     return (
       <div className="chart-options">
-        <p>Select a dataset:</p>
-        <DropDown onClick={this.props.changeSelectedDataset} items={this.props.datasets} curItem={this.props.selectedDataset} />
 
-        { this.querySection() }
+        <p>Select a dataset:</p>
+        <DropDown onClick={this.changeDataset} items={this.props.datasets} curItem={this.props.selectedDataset} />
+        <br/>
+
+        { this.props.stats &&
+          <div className="dataset-stats">
+            <p>Dataset Statistics</p>
+            <p>Table: {this.props.stats.data_tablename}</p>
+            <p>Default Anomaly Threshold: {this.props.stats.threshold}</p>
+            <p>Defatult Anomaly Type: {this.props.stats.comparator}</p>
+          </div>
+        }
+
+        { this.props.stats && this.querySection() }
 
         <br/>
 
@@ -118,16 +146,20 @@ function mapStateToProps(state) {
   return {
     data: selectors.getData(state),
     selectedDataset: selectors.getSelectedDataset(state),
+    stats: selectors.getStats(state),
     datasets: selectors.getDatasets(state),
-    queryType: selectors.getQueryType(state)
+    queryType: selectors.getQueryType(state),
+    minVal: selectors.getMinVal(state),
+    maxVal: selectors.getMaxVal(state)
   };
 }
 
 function mapDispatchToProps(dispatch) {
   return {
-    searchData: (dataset, query, min, max) => dispatch({ type: 'SEARCH_DATA', payload: {dataset: dataset, queryType: query, minVal: min, maxVal: max }}),
+    searchData: (dataset, stats, min, max) => dispatch({ type: 'SEARCH_DATA', payload: {dataset: dataset, stats: stats, min: min, max: max }}),
     changeSelectedDataset: (val) => dispatch(actions.changeSelectedDataset(val)),
     fetchDatasets: () => dispatch({ type: 'FETCH_DATASETS', payload:'' }),
+    fetchStats: (dataset) => dispatch({ type: 'FETCH_STATS', payload: {dataset: dataset} }),
     changeQueryType: (val) => dispatch(actions.changeQueryType(val)),
     changeMinVal: (val) => dispatch(actions.changeMinVal(val)),
     changeMaxVal: (val) => dispatch(actions.changeMaxVal(val))

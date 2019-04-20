@@ -22,7 +22,7 @@ export class ChartPane extends Component{
     var startDate = new Date(data.start_date)
     var endDate = new Date(data.end_date)
     var totTime = endDate - startDate
-    var n = data.json_agg.length
+    var n = data.number_points
     var spanLength = totTime / (n -1)
 
     var dt = startDate

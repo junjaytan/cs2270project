@@ -17,10 +17,21 @@ function* fetchDatasets(action) {
 
 }
 
+function* fetchStats(action) {
+
+  try {
+    const data = yield call(Client.getStats, action.payload.dataset);
+    yield put(actions.fetchStats(data));
+  } catch(error) {
+    yield put(actions.changeError(errorText));
+  }
+
+}
+
 function* searchData(action) {
 
   try {
-    const data = yield call(Client.searchData);
+    const data = yield call(Client.searchData, action.payload);
     console.log(data);
     yield put(actions.searchData(data));
   } catch(error) {
@@ -34,6 +45,7 @@ function* searchData(action) {
 export default function* rootSaga() {
   yield all([
     takeEvery('FETCH_DATASETS', fetchDatasets),
+    takeEvery('FETCH_STATS', fetchStats),
     takeEvery('SEARCH_DATA', searchData)
   ])
 }

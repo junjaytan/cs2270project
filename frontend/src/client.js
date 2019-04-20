@@ -2,34 +2,28 @@ const SERVER_URL = "http://localhost:8000"
 
 class Client {
 
-  static async getTimeSeries(id: string, granularity: string, aggregation: string): Promise<TimeseriesModel> {
-    let response = await fetch(this.constructUrl("timeseries/" + id + "?granularity=" + granularity + "&aggregation=" + aggregation));
-    return await response.json();
-  }
-
   async getDatasets() {
-    console.log("getting a datset");
+    console.log("getting datasets");
     let response = await fetch(SERVER_URL + "/datasets");
     return await response.json();
   }
 
-  async searchData() {
-    console.log("getting data");
-    let response = await fetch(SERVER_URL + "/data");
+  async getStats(dataset) {
+    console.log("getting stats");
+    let response = await fetch(SERVER_URL + "/stats?dataset=" + dataset);
     return await response.json();
   }
 
-  static async setCustomDataset(timeseries:Array<Array<number>>) {
-    let url = this.constructUrl("setcustomdataset")
-    let response = await fetch(url,
-      {
-          headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json'
-          },
-          method: "POST",
-          body: JSON.stringify(timeseries)
-      });
+  async searchData(queryInfo) {
+    console.log("getting data");
+    let response = await fetch(SERVER_URL + "/data?dataset=" + queryInfo.dataset
+      + "&table=" + queryInfo.stats.data_tablename
+      + "&tscol=" + queryInfo.stats.ts_colname
+      + "&thresholdcol=" + queryInfo.stats.threshold_colname
+      + "&valuecol=" + queryInfo.stats.value_colname
+      + "&min=" + queryInfo.min
+      + "&max=" + queryInfo.max
+    );
     return await response.json();
   }
 

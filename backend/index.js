@@ -3,23 +3,52 @@ var app = express()
 var cors = require('cors')
 const port = 8000
 
-var pgp = require('pg-promise')(/*options*/)
-var db = pgp('postgres://postgres@localhost:5432/testdata')
+var pgp = require('pg-promise')()
+
 
 app.use(cors())
 
 // respond with "hello world" when a GET request is made to the homepage
 app.get('/datasets', function (req, res) {
-  res.send('["datset1","otherdata"]')
+  let db = pgp('postgres://postgres@localhost:5432/postgres')
+  db.any(`SELECT datname FROM pg_database WHERE pg_database.datname NOT LIKE 'postgres' AND pg_database.datname NOT LIKE 'template%';`)
+  .then(function (data) {
+    res.send(data.map( (val) => val.datname))
+  })
+  .catch(function (error) {
+    console.log('ERROR: ', error)
+  })
+  // res.send('["datset1","otherdata"]')
+})
+
+app.get('/stats', function (req, res) {
+  let dbCon = 'postgres://postgres@localhost:5432/' + req.query.dataset;
+  let db = pgp(dbCon);
+  db.one(`SELECT * FROM anomaly_meta;`)
+  .then(function (data) {
+    res.send(data)
+  })
+  .catch(function (error) {
+    console.log('ERROR: ', error)
+  })
 })
 
 app.get('/data', function (req, res) {
-  db.any(`SELECT start_date, end_date, json_agg(sine1_value ORDER BY my_datetime)
-  FROM sinewaves_matching_ranges_temp, sinewaves_data
-  WHERE sinewaves_data.my_datetime >=start_date AND sinewaves_data.my_datetime <= end_date
-  GROUP BY start_date, end_date
-  ORDER BY end_date DESC
-  LIMIT 10;`)
+  console.log(req.query);
+  let dbCon = 'postgres://postgres@localhost:5432/' + req.query.dataset;
+  let db = pgp(dbCon);
+  let table = 'NULL::public.' + req.query.table;
+  let ts_col = req.query.tscol;
+  let anomaly_col = req.query.thresholdcol;
+  let value_col = req.query.valuecol;
+  let min = Number(req.query.min);
+  let max = Number(req.query.max);
+  console.log([table, ts_col, anomaly_col, value_col, min, max]);
+  db.any(`SELECT segment_start_ts as start_date, MAX(cur_ts) AS end_date, COUNT(*) AS number_points, json_agg(value_to_passthru ORDER BY cur_ts) AS json_agg
+  FROM filter_segments($1:raw, $2, $3, $4, $5, $6)
+  GROUP BY segment_start_ts
+  ORDER BY number_points DESC
+  LIMIT 10;`, [table, ts_col, anomaly_col, value_col, min, max])
   .then(function (data) {
     res.send(data)
   })
