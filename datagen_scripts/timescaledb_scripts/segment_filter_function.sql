@@ -147,7 +147,7 @@ SELECT segment_start_ts, MAX(cur_ts) AS segment_end_ts,
 COUNT(*) AS number_points,
 json_agg(cur_ts order by cur_ts) as json_ts,
 json_agg(value_to_passthru ORDER BY cur_ts) AS json_data
-FROM filter_segments(NULL::public.ecg_data, 'ecg_datetime', 'anomaly_likelihood', 78, 300)
+FROM filter_segments(NULL::public.ecg_data, 'ecg_datetime', 'anomaly_likelihood', 'ecg_mv', 78, 300)
 GROUP BY segment_start_ts
 ORDER BY number_points DESC -- segment_end_ts, AVG(value_to_filter) DESC
 LIMIT 10;
