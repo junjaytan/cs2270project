@@ -12,3 +12,6 @@
 
 # Other postgres extension compiled binaries
 *.bc
+
+# Regression test results
+results/*
