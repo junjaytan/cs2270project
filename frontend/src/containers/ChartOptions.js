@@ -4,6 +4,7 @@ import * as selectors from '../reducer';
 import * as actions from '../actions';
 import Button from '../components/Button';
 import DropDown from '../components/DropDown';
+import ConnectionSettingsForm from '../components/ConnectionSettingsForm'
 
 class ChartOptions extends Component {
 
@@ -118,7 +119,8 @@ class ChartOptions extends Component {
   render() {
     return (
       <div className="chart-options">
-
+        <ConnectionSettingsForm items="" />
+        <hr />
         <p>Select a dataset:</p>
         <DropDown onClick={this.changeDataset} items={this.props.datasets} curItem={this.props.selectedDataset} />
         <br/>
