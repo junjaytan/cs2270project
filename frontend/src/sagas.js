@@ -9,7 +9,7 @@ const errorText = "Something went wrong.  Please refresh the page in a few minut
 function* fetchDatasets(action) {
 
   try {
-    const data = yield call(Client.getDatasets);
+    const data = yield call(Client.getDatasets, action.payload.dbParams);  // This actually performs the request
     yield put(actions.fetchDatasets(data));
   } catch(error) {
     yield put(actions.changeError(errorText));
@@ -48,4 +48,5 @@ export default function* rootSaga() {
     takeEvery('FETCH_STATS', fetchStats),
     takeEvery('SEARCH_DATA', searchData)
   ])
+
 }

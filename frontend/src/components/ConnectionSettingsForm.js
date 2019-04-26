@@ -5,10 +5,16 @@ export default class ConnectionSettingsForm extends Component {
   constructor(props) {
     super(props);
 
+    // Note: currently duplicates state vars from parent, since
+    // we can update these independently (i.e., in the form)
+    // vs only needing to update the parent when we want to try connecting to db.
     this.state = {
-      db: "ecgdb",
-      schema: "public",
-      metadataTable: "anomaly_meta"
+      host: this.props.connectParams.host,
+      user: this.props.connectParams.user,
+      pw: this.props.connectParams.pw,
+      dbName: this.props.connectParams.dbName,
+      schema: this.props.connectParams.schema,
+      metadataTable: this.props.connectParams.metadataTable,
     };
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleClick = this.handleClick.bind(this);
@@ -25,19 +31,44 @@ export default class ConnectionSettingsForm extends Component {
   }
 
   handleClick() {
-    console.log("db: " + this.state.db + " schema: " + this.state.schema +
-                " metadataTable: " + this.state.metadataTable);
+    this.props.onConnectButtonClick({
+      host: this.state.host,
+      dbName: this.state.dbName,
+      user: this.state.user,
+      pw: this.state.pw,
+      schema: this.state.schema,
+      metadataTable: this.state.metadataTable,
+    });
   }
 
   render() {
     return (
       <div>
-      <h5>Connection Settings</h5>
+      <h5>DB Connection Settings</h5>
+
+      <InputGroup size="sm">
+        <InputGroupAddon addonType="prepend">
+          <InputGroupText>Host</InputGroupText>
+        </InputGroupAddon>
+        <Input name="host" defaultValue={this.state.host} onChange={this.handleInputChange}/>
+      </InputGroup>
+      <InputGroup size="sm">
+        <InputGroupAddon addonType="prepend">
+          <InputGroupText>User</InputGroupText>
+        </InputGroupAddon>
+        <Input name="user" defaultValue={this.state.user} onChange={this.handleInputChange}/>
+      </InputGroup>
+      <InputGroup size="sm">
+        <InputGroupAddon addonType="prepend">
+          <InputGroupText>Password</InputGroupText>
+        </InputGroupAddon>
+        <Input name="pw" type="password" defaultValue={this.state.pw} onChange={this.handleInputChange}/>
+      </InputGroup>
       <InputGroup size="sm">
         <InputGroupAddon addonType="prepend">
           <InputGroupText>DB &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</InputGroupText>
         </InputGroupAddon>
-        <Input name="db" defaultValue={this.state.db} onChange={this.handleInputChange}/>
+        <Input name="dbName" defaultValue={this.state.dbName} onChange={this.handleInputChange}/>
       </InputGroup>
       <InputGroup size="sm">
         <InputGroupAddon addonType="prepend">

@@ -2,15 +2,34 @@ const SERVER_URL = "http://localhost:8000"
 
 class Client {
 
-  async getDatasets() {
-    console.log("getting datasets");
-    let response = await fetch(SERVER_URL + "/datasets");
+  /**
+   *
+   * @param {*} dbParams is an object structured like state.db
+   * in ChartOptions.
+   */
+  async getDatasets(dbParams) {
+
+    let response = await fetch(SERVER_URL + "/datasets", {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        host: dbParams.host,
+        user: dbParams.user,
+        pw: dbParams.pw,  // Obviously not a secure way to send this, but oh well...
+        dbName: dbParams.dbName,
+        schema: dbParams.schema,
+        metadataTable: dbParams.metadataTable,
+      })
+    });
     return await response.json();
   }
 
-  async getStats(dataset) {
+  async getStats(database) {
     console.log("getting stats");
-    let response = await fetch(SERVER_URL + "/stats?dataset=" + dataset);
+    let response = await fetch(SERVER_URL + "/stats?dataset=" + database);
     return await response.json();
   }
 

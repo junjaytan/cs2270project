@@ -29,3 +29,7 @@ export function searchData(data) {
 export function changeError(data) {
   return({ type: 'CHANGE_ERROR', data})
 }
+
+export function changeDbParams(data) {
+  return({ type: 'CHANGE_DBPARAMS', data})
+}

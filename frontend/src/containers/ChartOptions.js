@@ -11,10 +11,21 @@ class ChartOptions extends Component {
   constructor(props) {
     super(props);
 
-    // if the datasets aren't loaded, go fetch it
-    if (this.props.datasets.length === 0) this.props.fetchDatasets();
+    // This contains the db connection params.
+    this.state = {
+      // These are default values that appear in the form.
+      db: {
+        host: 'localhost',
+        dbName: 'ecgdb',
+        user: 'postgres',
+        pw: 'postgres',
+        schema: "public",
+        metadataTable: "anomaly_meta",
+      }
+    }
 
     this.changeDataset = this.changeDataset.bind(this);
+    this.handleDbParamsChange = this.handleDbParamsChange.bind(this);
   }
 
   queryButton(q) {
@@ -111,15 +122,44 @@ class ChartOptions extends Component {
     }
   }
 
+  componentDidUpdate() {
+  }
+
+  // Callback handler to request backend to ping DB once state has been udpated
+  callFetchDataset() {
+    this.props.fetchDatasets(this.state.db);
+  }
+
   changeDataset(dataset) {
     this.props.changeSelectedDataset(dataset);
     this.props.fetchStats(dataset);
   }
 
+  handleDbParamsChange(dbParams) {
+    this.setState({
+      db: {
+        host: dbParams.host,
+        dbName: dbParams.dbName,
+        user: dbParams.user,
+        pw: dbParams.pw,
+        schema: dbParams.schema,
+        metadataTable: dbParams.metadataTable,
+    }}, this.callFetchDataset);
+    // TODO: fix weird duplication...
+    this.props.changeDbParams({
+      host: dbParams.host,
+      dbName: dbParams.dbName,
+      user: dbParams.user,
+      pw: dbParams.pw,
+      schema: dbParams.schema,
+      metadataTable: dbParams.metadataTable,
+    });
+  }
+
   render() {
     return (
       <div className="chart-options">
-        <ConnectionSettingsForm items="" />
+        <ConnectionSettingsForm connectParams={this.state.db} onConnectButtonClick={this.handleDbParamsChange}/>
         <hr />
         <p>Select a dataset:</p>
         <DropDown onClick={this.changeDataset} items={this.props.datasets} curItem={this.props.selectedDataset} />
@@ -147,6 +187,7 @@ class ChartOptions extends Component {
 function mapStateToProps(state) {
   return {
     data: selectors.getData(state),
+    dbParams: selectors.getDbParams(state),
     selectedDataset: selectors.getSelectedDataset(state),
     stats: selectors.getStats(state),
     datasets: selectors.getDatasets(state),
@@ -160,7 +201,8 @@ function mapDispatchToProps(dispatch) {
   return {
     searchData: (dataset, stats, min, max) => dispatch({ type: 'SEARCH_DATA', payload: {dataset: dataset, stats: stats, min: min, max: max }}),
     changeSelectedDataset: (val) => dispatch(actions.changeSelectedDataset(val)),
-    fetchDatasets: () => dispatch({ type: 'FETCH_DATASETS', payload:'' }),
+    changeDbParams: (val) => dispatch(actions.changeDbParams(val)),
+    fetchDatasets: (dbParams) => dispatch({ type: 'FETCH_DATASETS', payload: {dbParams: dbParams} }),
     fetchStats: (dataset) => dispatch({ type: 'FETCH_STATS', payload: {dataset: dataset} }),
     changeQueryType: (val) => dispatch(actions.changeQueryType(val)),
     changeMinVal: (val) => dispatch(actions.changeMinVal(val)),

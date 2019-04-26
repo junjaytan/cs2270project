@@ -1,24 +1,60 @@
-var express = require('express')
-var app = express()
-var cors = require('cors')
-const port = 8000
+var express = require('express');
+var app = express();
+var cors = require('cors');
+var bodyParser = require('body-parser');  // reqd for parsing request body in express4+
+const port = 8000;
 
-var pgp = require('pg-promise')()
+var pgp = require('pg-promise')();
 
-
-app.use(cors())
+app.use(cors());
+app.use(bodyParser());
 
 // respond with "hello world" when a GET request is made to the homepage
-app.get('/datasets', function (req, res) {
-  let db = pgp('postgres://postgres@localhost:5432/postgres')
-  db.any(`SELECT datname FROM pg_database WHERE pg_database.datname NOT LIKE 'postgres' AND pg_database.datname NOT LIKE 'template%';`)
-  .then(function (data) {
-    res.send(data.map( (val) => val.datname))
-  })
+app.post('/datasets', function (req, res) {
+
+  let user = req.body.user;
+  let pw = '';
+  if (req.body.pw) {
+    pw = req.body.pw;
+  }
+  let host = req.body.host;
+  let dbName = req.body.dbName;
+  let schema = req.body.schema;
+  let metadataTable = req.body.metadataTable;
+
+  // Hard coded for now, but variables in case we need to
+  // parameterize these in the future
+  let datatableNameColumn = 'data_tablename';
+  let port = '5432';
+
+  // Verify required params are not empty before trying to connect to DB.
+  // Reminder: pw can be empty string
+  // TODO: I don't think this is correct expressjs error handling...
+  if (!user || !host || !dbName || !schema || !metadataTable) {
+    res.status(400);
+    res.send('Mising a required DB connection parameter. ' +
+             'You must provider user, host, dbName, schema, and metadataTable');
+    return;
+  }
+
+  let pgUri = `postgres://${user}:${pw}@${host}:${port}/${dbName}`;
+  let dbconn = pgp(pgUri);
+
+  let query = `SELECT "${datatableNameColumn}" FROM "${schema}"."${metadataTable}";`;
+
+  // TODO: Prevent creating a second database connection. Need to either close
+  // it or create a pool of connections we can reuse.
+  dbconn.any(query).then(
+    function (data) {
+      res.status(200);
+      res.send(data.map( (val) => val[datatableNameColumn]))
+    })
   .catch(function (error) {
-    console.log('ERROR: ', error)
+    let errorMsg = 'Error: ' + error;
+    console.log(errorMsg);
+    res.status(500);
+    res.send(errorMsg);
   })
-  // res.send('["datset1","otherdata"]')
 })
 
 app.get('/stats', function (req, res) {

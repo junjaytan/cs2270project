@@ -1,6 +1,7 @@
 import Immutable from 'seamless-immutable';
 
 const initialState = Immutable({
+  dbParams: {},
   selectedDataset: "",
   datasets: [],
   stats: {},
@@ -13,12 +14,14 @@ const initialState = Immutable({
 
 
 export default function reduce(state = initialState, action = {}) {
-  console.log(action);
-  console.log(state);
   switch (action.type) {
     case 'CHANGE_DATA':
       return state.merge({
         data: action.data
+      });
+    case 'CHANGE_DBPARAMS':
+      return state.merge({
+        dbParams: action.data
       });
     case 'CHANGE_SELECTED_DATASET':
       return state.merge({
@@ -55,6 +58,10 @@ export default function reduce(state = initialState, action = {}) {
 
 export function getData(state) {
   return state.data;
+}
+
+export function getDbParams(state) {
+  return state.dbParams;
 }
 
 export function getSelectedDataset(state) {
