@@ -25,12 +25,13 @@ export default class DropDown extends Component {
 
   render() {
     return (
-      <ButtonDropdown isOpen={this.state.dropdownOpen} toggle={this.toggle}>
+      <ButtonDropdown size="sm" isOpen={this.state.dropdownOpen} toggle={this.toggle}>
         <DropdownToggle caret>
           { this.props.curItem ? this.props.curItem : "Select"}
         </DropdownToggle>
         <DropdownMenu>
-          { this.props.items.map( (val) => this.generateItem(val)) }
+          { //this.props.items.map( (val) => this.generateItem(val))
+          }
         </DropdownMenu>
       </ButtonDropdown>
     );

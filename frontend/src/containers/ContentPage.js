@@ -15,7 +15,7 @@ export class ContentPage extends Component {
     return(
       <div className="content-page">
         <div className="left-pane">
-          <div className="content-pane">
+          <div>
             <ChartOptions />
           </div>
         </div>

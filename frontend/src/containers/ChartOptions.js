@@ -1,10 +1,14 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import { Container, Row, Col } from 'reactstrap';
 import * as selectors from '../reducer';
 import * as actions from '../actions';
 import Button from '../components/Button';
 import DropDown from '../components/DropDown';
+
 import ConnectionSettingsForm from '../components/ConnectionSettingsForm'
+import DatasetStatsTable from '../components/DatasetStatsTable'
+import DatabaseConnStatusAlert from '../components/DatabaseConnStatusAlert'
 
 class ChartOptions extends Component {
 
@@ -21,7 +25,7 @@ class ChartOptions extends Component {
         pw: 'postgres',
         schema: "public",
         metadataTable: "anomaly_meta",
-      }
+      },
     }
 
     this.changeDataset = this.changeDataset.bind(this);
@@ -136,6 +140,8 @@ class ChartOptions extends Component {
   }
 
   handleDbParamsChange(dbParams) {
+    // TODO: clear datasets list if it was already populated
+    // from a previous connection (and possibly other stuff)
     this.setState({
       db: {
         host: dbParams.host,
@@ -160,19 +166,20 @@ class ChartOptions extends Component {
     return (
       <div className="chart-options">
         <ConnectionSettingsForm connectParams={this.state.db} onConnectButtonClick={this.handleDbParamsChange}/>
+        <DatabaseConnStatusAlert backendConnSuccess={this.props.backendConnSuccess}
+              dbQuerySuccess={this.props.dbQuerySuccess} dbErrMsg={this.props.dbErrorMsg}/>
         <hr />
-        <p>Select a dataset:</p>
-        <DropDown onClick={this.changeDataset} items={this.props.datasets} curItem={this.props.selectedDataset} />
-        <br/>
-
-        { this.props.stats &&
-          <div className="dataset-stats">
-            <p>Dataset Statistics</p>
-            <p>Table: {this.props.stats.data_tablename}</p>
-            <p>Default Anomaly Threshold: {this.props.stats.threshold}</p>
-            <p>Defatult Anomaly Type: {this.props.stats.comparator}</p>
-          </div>
-        }
+        <Container>
+          <Row>
+            <Col>Select a dataset:</Col>
+            <Col><DropDown onClick={this.changeDataset} items={this.props.datasets}
+                    curItem={this.props.selectedDataset} />
+            </Col>
+          </Row>
+        </Container>
+        <hr />
+        <b>Dataset Statistics</b>
+        <DatasetStatsTable />
 
         { this.props.stats && this.querySection() }
 
@@ -188,6 +195,9 @@ function mapStateToProps(state) {
   return {
     data: selectors.getData(state),
     dbParams: selectors.getDbParams(state),
+    backendConnSuccess: selectors.getBackendConnSuccess(state),
+    dbQuerySuccess: selectors.getDbQuerySuccess(state),
+    dbErrorMsg: selectors.getDbErrorMsg(state),
     selectedDataset: selectors.getSelectedDataset(state),
     stats: selectors.getStats(state),
     datasets: selectors.getDatasets(state),

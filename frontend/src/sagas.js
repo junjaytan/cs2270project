@@ -9,10 +9,32 @@ const errorText = "Something went wrong.  Please refresh the page in a few minut
 function* fetchDatasets(action) {
 
   try {
-    const data = yield call(Client.getDatasets, action.payload.dbParams);  // This actually performs the request
-    yield put(actions.fetchDatasets(data));
+    const resp = yield call(Client.getDatasets, action.payload.dbParams);
+    let httpstatus = resp.status;
+    let queryErrText = '';
+    let querySuccess = null;
+
+    const respBody = yield resp.text();
+
+    console.log(httpstatus);
+    if (httpstatus != 200) {
+      // 400 or 500 means the query failed.
+      // This may be because your db connection params are wrong
+      // and the db is not available there, or your query is malformed.
+      querySuccess = false;;
+      queryErrText = respBody;
+    } else {
+      querySuccess = true;
+    }
+    yield put(actions.changeBackendConnSuccess(true));
+    yield put(actions.changeDbQuerySuccess(querySuccess))
+    yield put(actions.changeDbErrorMsg(queryErrText));
+
+    // TODO: still need to return data
+    // yield put(actions.fetchDatasets(data));
   } catch(error) {
-    yield put(actions.changeError(errorText));
+    // Backend is not available!
+    yield put(actions.changeBackendConnSuccess(false));
   }
 
 }

@@ -1,7 +1,13 @@
 import Immutable from 'seamless-immutable';
 
 const initialState = Immutable({
+  // if true, means connection to express backend succeeded
+  // (note that db connection and/or query itself may still fail)
+  backendConnSuccess: null,
   dbParams: {},
+  dbErrorMsg: '',   // used if db connection or query fails
+  dbQuerySuccess: null,
+  responseCode: null,  // express http response code
   selectedDataset: "",
   datasets: [],
   stats: {},
@@ -22,6 +28,18 @@ export default function reduce(state = initialState, action = {}) {
     case 'CHANGE_DBPARAMS':
       return state.merge({
         dbParams: action.data
+      });
+    case 'CHANGE_BACKEND_CONN_SUCCESS':
+      return state.merge({
+        backendConnSuccess: action.data
+      });
+    case 'CHANGE_DB_ERROR_MSG':
+      return state.merge({
+        dbErrorMsg: action.data
+      });
+    case 'CHANGE_DBQUERY_SUCCESS':
+      return state.merge({
+        dbQuerySuccess: action.data
       });
     case 'CHANGE_SELECTED_DATASET':
       return state.merge({
@@ -62,6 +80,18 @@ export function getData(state) {
 
 export function getDbParams(state) {
   return state.dbParams;
+}
+
+export function getBackendConnSuccess(state) {
+  return state.backendConnSuccess;
+}
+
+export function getDbErrorMsg(state) {
+  return state.dbErrorMsg;
+}
+
+export function getDbQuerySuccess(state) {
+  return state.dbQuerySuccess;
 }
 
 export function getSelectedDataset(state) {

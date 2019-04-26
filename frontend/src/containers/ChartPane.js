@@ -12,7 +12,7 @@ export class ChartPane extends Component{
     if (this.props.selectedDataset) {
       return <h5> x length segments where { this.props.selectedDataset } is as you selected </h5>
     } else {
-      return <h5> Follow the instructions on the left, to selct a dataset to explore </h5>
+      return <h5> Follow the instructions on the left, to select a dataset to explore </h5>
     }
   }
 

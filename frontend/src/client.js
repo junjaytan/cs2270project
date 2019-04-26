@@ -24,7 +24,7 @@ class Client {
         metadataTable: dbParams.metadataTable,
       })
     });
-    return await response.json();
+    return await response;
   }
 
   async getStats(database) {

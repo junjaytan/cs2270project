@@ -33,3 +33,15 @@ export function changeError(data) {
 export function changeDbParams(data) {
   return({ type: 'CHANGE_DBPARAMS', data})
 }
+
+export function changeBackendConnSuccess(data) {
+  return({ type: 'CHANGE_BACKEND_CONN_SUCCESS', data})
+}
+
+export function changeDbQuerySuccess(data) {
+  return({ type: 'CHANGE_DBQUERY_SUCCESS', data});
+}
+
+export function changeDbErrorMsg(data) {
+  return({ type: 'CHANGE_DB_ERROR_MSG', data});
+}
