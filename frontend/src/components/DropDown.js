@@ -30,8 +30,7 @@ export default class DropDown extends Component {
           { this.props.curItem ? this.props.curItem : "Select"}
         </DropdownToggle>
         <DropdownMenu>
-          { //this.props.items.map( (val) => this.generateItem(val))
-          }
+          { this.props.items.map( (val) => this.generateItem(val)) }
         </DropdownMenu>
       </ButtonDropdown>
     );

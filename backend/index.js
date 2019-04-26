@@ -19,6 +19,53 @@ var dbPort = '5432';
 var isDbConnected = false;
 var dbconn;  // holds the db connection instance
 
+// Caches all available datasets we've found keyed by dataset name
+// (i.e., postgres table name)
+var datasets = {};
+
+// Each dataset will be represented via this class
+class Dataset {
+  constructor(name) {
+    // Name is the postgres table name.
+    this.name = name;
+    this.datetimeCol = null;
+    this.valueCol = null;
+    this.thresholdCol = null;  // Column that holds AD raw output
+    this.threshold = null;
+    this.thresholdComparator = null;
+  }
+
+  setDatetimeColName(colName) {
+    this.datetimeCol = colName;
+  }
+
+  getDateTimeColName() {
+    return this.datetimeCol;
+  }
+
+  setValueColName(colName) {
+    this.valueCol = colName;
+  }
+
+  getValueColName() {
+    return this.valueCol;
+  }
+
+  setThresholdColName(colName) {
+    this.thresholdCol = colName;
+  }
+
+  getThresholdColName() {
+    return this.thresholdCol;
+  }
+
+
+
+  getName() {
+    return this.name;
+  }
+}
+
 
 // Do not create multiple connections if one already exists
 function initializeOrResetDB(user, pw, host, port, db) {
@@ -55,6 +102,9 @@ function initializeOrResetDB(user, pw, host, port, db) {
 
 app.post('/datasets', function (req, res) {
 
+  // Each time we run this request, clear the cache of existing datasets
+  datasets = {};
+
   let user = req.body.user;
   let pw = '';
   if (req.body.pw) {
@@ -80,26 +130,40 @@ app.post('/datasets', function (req, res) {
     return;
   }
 
+  // Do not create a new database connection each time this endpoint is pinged.
+  // Instead, we either close the existing connection (if new db params are provided)
+  // or use the existing client.
   initializeOrResetDB(user, pw, host, port, db);
 
-  let query = `SELECT "${datatableNameColumn}" FROM "${schema}"."${metadataTable}";`;
+  // Return all metadata, since we'll need it for later requests
+  let query = `SELECT * FROM "${schema}"."${metadataTable}";`;
 
-  // TODO: Prevent creating a second database connection. Need to either close
-  // it or create a pool of connections we can reuse.
   dbconn.any(query).then(
     function (data) {
       res.status(200);
-      res.send(data.map( (val) => val[datatableNameColumn]))
+      // Cache dataset metadata so we can reuse it for other requests
+      // Use a for loop so we can easily append additional metadata as the need
+      // arises
+      for (let i = 0; i < data.length; i++) {
+        let curTblRow = data[i];
+        let curDataTableName = curTblRow[datatableNameColumn];
+        datasets[curDataTableName] = new Dataset(curDataTableName);
+      }
+      // TODO: calculate dataset stats now and cache them
+      res.send(data.map( (val) => val[datatableNameColumn]));
     })
   .catch(function (error) {
-    let errorMsg = 'Error: ' + error;
-    console.log(errorMsg);
+    //let errorMsg = error;
+    let errorMsg = String(error);
     res.status(500);
     res.send(errorMsg);
   })
 })
 
 app.get('/stats', function (req, res) {
+  // If no datasets were found previously, don't do anything.
+  // Use previously cache stats if available. Otherwise, cache on demand.
+
   let dbCon = 'postgres://postgres@localhost:5432/' + req.query.dataset;
   let db = pgp(dbCon);
   db.one(`SELECT * FROM anomaly_meta;`)

@@ -13,27 +13,29 @@ function* fetchDatasets(action) {
     let httpstatus = resp.status;
     let queryErrText = '';
     let querySuccess = null;
-
-    const respBody = yield resp.text();
+    let respBody = null;
 
     console.log(httpstatus);
     if (httpstatus != 200) {
       // 400 or 500 means the query failed.
       // This may be because your db connection params are wrong
       // and the db is not available there, or your query is malformed.
-      querySuccess = false;;
+      querySuccess = false;
+      respBody = yield resp.text();
       queryErrText = respBody;
+      yield put(actions.fetchDatasets([]));  // Reset datasets dropdown to empty
     } else {
       querySuccess = true;
+      respBody = yield resp.json();
+      yield put(actions.fetchDatasets(respBody));
     }
     yield put(actions.changeBackendConnSuccess(true));
     yield put(actions.changeDbQuerySuccess(querySuccess))
     yield put(actions.changeDbErrorMsg(queryErrText));
 
-    // TODO: still need to return data
-    // yield put(actions.fetchDatasets(data));
   } catch(error) {
     // Backend is not available!
+    yield put(actions.fetchDatasets([]));  // Reset datasets dropdown to empty
     yield put(actions.changeBackendConnSuccess(false));
   }
 

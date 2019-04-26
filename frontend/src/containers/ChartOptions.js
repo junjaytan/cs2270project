@@ -131,6 +131,9 @@ class ChartOptions extends Component {
 
   // Callback handler to request backend to ping DB once state has been udpated
   callFetchDataset() {
+    // Ensure dropDown menu and current selection is cleared,
+    // in case we are running a second connection and it fails.
+    this.props.changeSelectedDataset("");
     this.props.fetchDatasets(this.state.db);
   }
 
