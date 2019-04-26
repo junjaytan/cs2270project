@@ -4,12 +4,55 @@ var cors = require('cors');
 var bodyParser = require('body-parser');  // reqd for parsing request body in express4+
 const port = 8000;
 
-var pgp = require('pg-promise')();
+const pgp = require('pg-promise')();
 
 app.use(cors());
 app.use(bodyParser());
 
-// respond with "hello world" when a GET request is made to the homepage
+
+// DB global connection params
+var dbUser = '';
+var dbPw = '';
+var dbName = '';
+var dbHost = '';
+var dbPort = '5432';
+var isDbConnected = false;
+var dbconn;  // holds the db connection instance
+
+
+// Do not create multiple connections if one already exists
+function initializeOrResetDB(user, pw, host, port, db) {
+  if (!isDbConnected) {
+    dbUser = user;
+    dbPw = pw;
+    dbHost = host;
+    // Using hard coded port
+    dbName = db;
+
+    let pgUri = `postgres://${user}:${pw}@${host}:${port}/${dbName}`;
+    dbconn = pgp(pgUri);
+
+    isDbConnected = true;
+    return;
+  }
+
+  // Stop current connection and recreate a new one if settings have changed.
+  if (isDbConnected && (user != dbUser || pw != dbPw ||
+    host != dbHost || db != dbName)) {
+      pgp.end();
+
+      dbUser = user;
+      dbPw = pw;
+      dbHost = host;
+      // Using hard coded port
+      dbName = db;
+
+      let pgUri = `postgres://${user}:${pw}@${host}:${port}/${dbName}`;
+      dbconn = pgp(pgUri);
+  }
+  // Otherwise using the same db connection, so don't create another connection.
+}
+
 app.post('/datasets', function (req, res) {
 
   let user = req.body.user;
@@ -18,7 +61,7 @@ app.post('/datasets', function (req, res) {
     pw = req.body.pw;
   }
   let host = req.body.host;
-  let dbName = req.body.dbName;
+  let db = req.body.dbName;
   let schema = req.body.schema;
   let metadataTable = req.body.metadataTable;
 
@@ -30,15 +73,14 @@ app.post('/datasets', function (req, res) {
   // Verify required params are not empty before trying to connect to DB.
   // Reminder: pw can be empty string
   // TODO: I don't think this is correct expressjs error handling...
-  if (!user || !host || !dbName || !schema || !metadataTable) {
+  if (!user || !host || !db || !schema || !metadataTable) {
     res.status(400);
-    res.send('Mising a required DB connection parameter. ' +
-             'You must provider user, host, dbName, schema, and metadataTable');
+    res.send('Mising a required DB connection parameter! ' +
+             'You must provide user, host, dbName, schema, and metadataTable');
     return;
   }
 
-  let pgUri = `postgres://${user}:${pw}@${host}:${port}/${dbName}`;
-  let dbconn = pgp(pgUri);
+  initializeOrResetDB(user, pw, host, port, db);
 
   let query = `SELECT "${datatableNameColumn}" FROM "${schema}"."${metadataTable}";`;
 
