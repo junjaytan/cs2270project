@@ -6,46 +6,24 @@ export default class DatasetsStatsTable extends Component {
         super(props);
       }
 
-    // TODO: anomaly threshold should have a comparator prepended
-    // eg. >=35
-
     generateTableRows() {
       if (!this.props.stats || Object.keys(this.props.stats).length == 0) {
         return (<tbody></tbody>);
       }
 
-      let num_rows = '';
-      let oldestTs = '';
-      let oldestTsStr = '';
-      let newestTs = '';
-      let newestTsStr = '';
-      let threshold = 0;
-      let thresholdStr = '';
-      let thresholdComparatorStr = ''
+      let num_rows = this.props.stats.rows;
+      num_rows = num_rows.toLocaleString(); // makes it prettier it by using commas
 
-      // TODO: Probably can just assume that once json is passed it will
-      // the the required entries.
-      if (this.props.stats.rows) {
-        num_rows = this.props.stats.rows;
-        num_rows = num_rows.toLocaleString(); // pretty it with commas to separate thousands
-      }
-      // TODO: dates should be formatted as UTC and with specific format
-      if (this.props.stats.oldestTs) {
-        oldestTs = new Date(this.props.stats.oldestTs);
-        oldestTsStr = oldestTs.toISOString();
-      }
-      if (this.props.stats.newestTs) {
-        newestTs = new Date(this.props.stats.newestTs);
-        newestTsStr = newestTs.toISOString();
-      }
-      if (this.props.stats.threshold) {
-        threshold = parseFloat(this.props.stats.threshold);
-        thresholdStr = threshold.toLocaleString();
-      }
+      let oldestTs = new Date(this.props.stats.oldestTs);
+      let oldestTsStr = oldestTs.toISOString();
 
-      if (this.props.stats.thresholdComparator) {
-        thresholdComparatorStr = this.props.stats.thresholdComparator;
-      }
+      let newestTs = new Date(this.props.stats.newestTs);
+      let newestTsStr = newestTs.toISOString();
+
+      let threshold = parseFloat(this.props.stats.threshold);
+      let thresholdStr = threshold.toLocaleString();
+      let thresholdComparatorStr = this.props.stats.thresholdComparator;
+      // Append comparator with threshold so it looks nice in UI (e.g., >2)
       thresholdStr = thresholdComparatorStr + thresholdStr;
 
       let detectorValMin = parseFloat(this.props.stats.detectorMin).toFixed(2);

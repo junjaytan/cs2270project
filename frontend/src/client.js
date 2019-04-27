@@ -8,7 +8,6 @@ class Client {
    * in ChartOptions.
    */
   async getDatasets(dbParams) {
-
     let response = await fetch(SERVER_URL + "/datasets", {
       method: 'POST',
       headers: {
@@ -28,7 +27,6 @@ class Client {
   }
 
   async getStats(database) {
-    console.log("getting stats");
     let response = await fetch(SERVER_URL + "/datasetstats?dataset=" + database);
     return await response;
   }
