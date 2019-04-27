@@ -137,14 +137,15 @@ class ChartOptions extends Component {
     this.props.fetchDatasets(this.state.db);
   }
 
+  // Called when user selects a new dataset
   changeDataset(dataset) {
     this.props.changeSelectedDataset(dataset);
+    // Note that logic in the actions ensures that appropriate menus
+    // and tables are cleared beforehand.
     this.props.fetchStats(dataset);
   }
 
   handleDbParamsChange(dbParams) {
-    // TODO: clear datasets list if it was already populated
-    // from a previous connection (and possibly other stuff)
     this.setState({
       db: {
         host: dbParams.host,
@@ -182,7 +183,7 @@ class ChartOptions extends Component {
         </Container>
         <hr />
         <b>Dataset Statistics</b>
-        <DatasetStatsTable />
+        <DatasetStatsTable stats={this.props.stats}/>
 
         { this.props.stats && this.querySection() }
 

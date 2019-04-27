@@ -7,6 +7,9 @@ const errorText = "Something went wrong.  Please refresh the page in a few minut
 
 // -------------FETCHING SAGAS -----------------
 function* fetchDatasets(action) {
+  yield put(actions.fetchDatasets([]));  // Reset datasets dropdown to empty
+  // Reset stats table before each request attempt.
+  yield put(actions.fetchStats({}));
 
   try {
     const resp = yield call(Client.getDatasets, action.payload.dbParams);
@@ -15,7 +18,6 @@ function* fetchDatasets(action) {
     let querySuccess = null;
     let respBody = null;
 
-    console.log(httpstatus);
     if (httpstatus != 200) {
       // 400 or 500 means the query failed.
       // This may be because your db connection params are wrong
@@ -23,7 +25,6 @@ function* fetchDatasets(action) {
       querySuccess = false;
       respBody = yield resp.text();
       queryErrText = respBody;
-      yield put(actions.fetchDatasets([]));  // Reset datasets dropdown to empty
     } else {
       querySuccess = true;
       respBody = yield resp.json();
@@ -35,21 +36,36 @@ function* fetchDatasets(action) {
 
   } catch(error) {
     // Backend is not available!
-    yield put(actions.fetchDatasets([]));  // Reset datasets dropdown to empty
     yield put(actions.changeBackendConnSuccess(false));
   }
-
 }
 
 function* fetchStats(action) {
+  // Reset stats table before each request attempt.
+  yield put(actions.fetchStats({}));
 
   try {
-    const data = yield call(Client.getStats, action.payload.dataset);
-    yield put(actions.fetchStats(data));
-  } catch(error) {
-    yield put(actions.changeError(errorText));
-  }
+    const resp = yield call(Client.getStats, action.payload.dataset);
+    let httpstatus = resp.status;
+    let querySuccess = null;
+    let respBody = null;
+    let queryErrText = '';
 
+    if (httpstatus != 200) {
+      querySuccess = false;
+      respBody = yield resp.text();
+      queryErrText = respBody;
+    } else {
+      querySuccess = true;
+      respBody = yield resp.json();
+      yield put(actions.fetchStats(respBody));
+    }
+    yield put(actions.changeDbQuerySuccess(querySuccess))
+    yield put(actions.changeDbErrorMsg(queryErrText));
+  } catch(error) {
+    // Backend is not available!
+    yield put(actions.changeBackendConnSuccess(false));
+  }
 }
 
 function* searchData(action) {

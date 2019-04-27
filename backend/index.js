@@ -11,28 +11,33 @@ app.use(bodyParser());
 
 
 // DB global connection params
-var dbUser = '';
-var dbPw = '';
-var dbName = '';
-var dbHost = '';
-var dbPort = '5432';
-var isDbConnected = false;
-var dbconn;  // holds the db connection instance
+// These will be initialized when we first fetch a list of datasets
+// and reused for subsequent requests
+var globalDbUser = '';
+var globalDbPw = '';
+var globalDbName = '';
+var globalDbHost = '';
+var globalDbPort = '5432';
+var globalIsDbConnected = false;
+var globalDbconn;  // holds the db connection instance
+var globalDbSchema = '';
 
-// Caches all available datasets we've found keyed by dataset name
+// Cache all available datasets we've found keyed by dataset name
 // (i.e., postgres table name)
-var datasets = {};
+var globalDatasets = {};
 
-// Each dataset will be represented via this class
+// Each dataset will be represented as an instance of this class
 class Dataset {
   constructor(name) {
-    // Name is the postgres table name.
-    this.name = name;
     this.datetimeCol = null;
     this.valueCol = null;
-    this.thresholdCol = null;  // Column that holds AD raw output
-    this.threshold = null;
+    this.detectorRawValuesCol = null;  // Column that holds AD raw output
+    this.threshold = null;  // The actual numerical threshold
+    // currently a string, e.g., 'greater_than' 'less_than',
+    // 'greaterorequal_than', lessorequal_than'
     this.thresholdComparator = null;
+
+    this.stats = null;  // A plain ol JS object.
   }
 
   setDatetimeColName(colName) {
@@ -51,51 +56,71 @@ class Dataset {
     return this.valueCol;
   }
 
-  setThresholdColName(colName) {
-    this.thresholdCol = colName;
+  setDetectorRawValuesColName(colName) {
+    this.detectorRawValuesCol = colName;
   }
 
-  getThresholdColName() {
-    return this.thresholdCol;
+  getDetectorRawValuesColName() {
+    return this.detectorRawValuesCol;
   }
 
+  getThreshold() {
+    return this.threshold;
+  }
 
+  setThreshold(value) {
+    this.threshold = value;
+  }
 
-  getName() {
-    return this.name;
+  setThresholdComparatorStr(value) {
+    this.thresholdComparator = value;
+  }
+
+  getThresholdComparatorStr() {
+    return this.thresholdComparator;
+  }
+
+  setStats(stats) {
+    this.stats = stats;
+  }
+
+  getStats() {
+    // Returns null if no stats have been calculated yet.
+    return this.stats;
   }
 }
 
 
 // Do not create multiple connections if one already exists
-function initializeOrResetDB(user, pw, host, port, db) {
-  if (!isDbConnected) {
-    dbUser = user;
-    dbPw = pw;
-    dbHost = host;
+function initializeOrResetDB(user, pw, host, port, db, schema) {
+  if (!globalIsDbConnected) {
+    globalDbUser = user;
+    globalDbPw = pw;
+    globalDbHost = host;
     // Using hard coded port
-    dbName = db;
+    globalDbName = db;
+    globalDbSchema = schema;
 
-    let pgUri = `postgres://${user}:${pw}@${host}:${port}/${dbName}`;
-    dbconn = pgp(pgUri);
+    let pgUri = `postgres://${user}:${pw}@${host}:${port}/${globalDbName}`;
+    globalDbconn = pgp(pgUri);
 
-    isDbConnected = true;
+    globalIsDbConnected = true;
     return;
   }
 
   // Stop current connection and recreate a new one if settings have changed.
-  if (isDbConnected && (user != dbUser || pw != dbPw ||
-    host != dbHost || db != dbName)) {
+  if (globalIsDbConnected && (user != globalDbUser || pw != globalDbPw ||
+    host != globalDbHost || db != globalDbName)) {
       pgp.end();
 
-      dbUser = user;
-      dbPw = pw;
-      dbHost = host;
+      globalDbUser = user;
+      globalDbPw = pw;
+      globalDbHost = host;
       // Using hard coded port
-      dbName = db;
+      globalDbName = db;
 
-      let pgUri = `postgres://${user}:${pw}@${host}:${port}/${dbName}`;
-      dbconn = pgp(pgUri);
+      let pgUri = `postgres://${user}:${pw}@${host}:${port}/${globalDbName}`;
+      globalDbconn = pgp(pgUri);
   }
   // Otherwise using the same db connection, so don't create another connection.
 }
@@ -103,7 +128,7 @@ function initializeOrResetDB(user, pw, host, port, db) {
 app.post('/datasets', function (req, res) {
 
   // Each time we run this request, clear the cache of existing datasets
-  datasets = {};
+  globalDatasets = {};
 
   let user = req.body.user;
   let pw = '';
@@ -118,7 +143,12 @@ app.post('/datasets', function (req, res) {
   // Hard coded for now, but variables in case we need to
   // parameterize these in the future
   let datatableNameColumn = 'data_tablename';
-  let port = '5432';
+  let datetimeColNameMetaCol = 'ts_colname';
+  let thresholdColNameMetaCol = 'threshold_colname';
+  let valueColNameMetaCol = 'value_colname';
+  let thresholdCol = 'threshold';  // this col holds the actual numerical threshold
+  let thresholdComparatorCol = 'comparator';
+  let port = globalDbPort;
 
   // Verify required params are not empty before trying to connect to DB.
   // Reminder: pw can be empty string
@@ -133,12 +163,12 @@ app.post('/datasets', function (req, res) {
   // Do not create a new database connection each time this endpoint is pinged.
   // Instead, we either close the existing connection (if new db params are provided)
   // or use the existing client.
-  initializeOrResetDB(user, pw, host, port, db);
+  initializeOrResetDB(user, pw, host, port, db, schema);
 
   // Return all metadata, since we'll need it for later requests
   let query = `SELECT * FROM "${schema}"."${metadataTable}";`;
 
-  dbconn.any(query).then(
+  globalDbconn.any(query).then(
     function (data) {
       res.status(200);
       // Cache dataset metadata so we can reuse it for other requests
@@ -147,32 +177,78 @@ app.post('/datasets', function (req, res) {
       for (let i = 0; i < data.length; i++) {
         let curTblRow = data[i];
         let curDataTableName = curTblRow[datatableNameColumn];
-        datasets[curDataTableName] = new Dataset(curDataTableName);
+        globalDatasets[curDataTableName] = new Dataset(curDataTableName);
+
+        globalDatasets[curDataTableName].setDatetimeColName(curTblRow[datetimeColNameMetaCol]);
+        globalDatasets[curDataTableName].setDetectorRawValuesColName(curTblRow[thresholdColNameMetaCol]);
+        globalDatasets[curDataTableName].setValueColName(curTblRow[valueColNameMetaCol]);
+        globalDatasets[curDataTableName].setThreshold(parseFloat(curTblRow[thresholdCol]));
+        globalDatasets[curDataTableName].setThresholdComparatorStr(curTblRow[thresholdComparatorCol]);
       }
-      // TODO: calculate dataset stats now and cache them
       res.send(data.map( (val) => val[datatableNameColumn]));
     })
   .catch(function (error) {
-    //let errorMsg = error;
     let errorMsg = String(error);
     res.status(500);
     res.send(errorMsg);
   })
 })
 
-app.get('/stats', function (req, res) {
-  // If no datasets were found previously, don't do anything.
-  // Use previously cache stats if available. Otherwise, cache on demand.
+app.get('/datasetstats', function (req, res) {
+  let datasetId = req.query.dataset;
 
-  let dbCon = 'postgres://postgres@localhost:5432/' + req.query.dataset;
-  let db = pgp(dbCon);
-  db.one(`SELECT * FROM anomaly_meta;`)
-  .then(function (data) {
-    res.send(data)
-  })
-  .catch(function (error) {
-    console.log('ERROR: ', error)
-  })
+  if (!datasetId || !(datasetId in globalDatasets)) {
+    res.status(400);
+    res.send('Missing or unrecognized dataset name. ' +
+             'Please provide query param "dataset"');
+    return;
+  }
+
+  let num_rows = null;
+  let oldest_ts = null;
+  let newest_ts = null;
+
+  let ts_colname = globalDatasets[datasetId].getDateTimeColName();
+  let detectorValColName = globalDatasets[datasetId].getDetectorRawValuesColName();
+
+  // Use previously cache stats if available. Otherwise, cache after we get results.
+  if (globalDatasets[datasetId].getStats()) {
+    console.log("using cached dataset stats.");
+    res.status(200);
+    res.send(globalDatasets[datasetId].getStats());
+    return;
+  }
+
+  // Note that schema is from the global var set during previous fetch datasets
+  // request.
+  query = `SELECT COUNT(*) AS num_rows, MIN("${ts_colname}") as oldest_ts, ` +
+  `MAX("${ts_colname}") AS newest_ts, MIN("${detectorValColName}") as detector_min, ` +
+  `MAX("${detectorValColName}") as detector_max FROM "${globalDbSchema}"."${datasetId}";`;
+  console.log('running query:');
+  console.log(query);
+
+  globalDbconn.one(query)
+    .then(function (data) {
+      console.log("success query");
+      result = {
+        'rows': parseInt(data['num_rows']),
+        'oldestTs': String(data['oldest_ts']),  // just return dates as strings
+        'newestTs': String(data['newest_ts']),
+        'threshold': globalDatasets[datasetId].getThreshold(),
+        'thresholdComparator': globalDatasets[datasetId].getThresholdComparatorStr(),
+        'detectorMin': data['detector_min'],
+        'detectorMax': data['detector_max']
+      }
+      globalDatasets[datasetId].setStats(result);  // cache in JSON
+
+      res.status(200);
+      res.send(result);
+    })
+    .catch(function (error) {
+      let errorMsg = String(error);
+      res.status(500);
+      res.send(errorMsg);
+    })
 })
 
 app.get('/data', function (req, res) {

@@ -29,8 +29,8 @@ class Client {
 
   async getStats(database) {
     console.log("getting stats");
-    let response = await fetch(SERVER_URL + "/stats?dataset=" + database);
-    return await response.json();
+    let response = await fetch(SERVER_URL + "/datasetstats?dataset=" + database);
+    return await response;
   }
 
   async searchData(queryInfo) {
@@ -43,7 +43,7 @@ class Client {
       + "&min=" + queryInfo.min
       + "&max=" + queryInfo.max
     );
-    return await response.json();
+    return await response;
   }
 
 }
