@@ -15,4 +15,4 @@ CREATE TABLE IF NOT EXISTS "anomaly_meta"(
 INSERT INTO anomaly_meta VALUES ('ecg_data', 'ecg_datetime', 'anomaly_likelihood', 'ecg_mv', 78, '>=');
 -- note: current max value is 272.25
 
-INSERT INTO anomaly_meta VALUES ('sinewaves_data', 'my_datetime', 'sine2_value', 'sine1_value', 5, '>=');
+INSERT INTO anomaly_meta VALUES ('sinewaves_data', 'my_datetime', 'sine1_value', 'sine2_value', 8.5, '>=');
