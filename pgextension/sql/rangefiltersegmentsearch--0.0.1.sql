@@ -1,10 +1,25 @@
 -- complain if script is sourced in psql, rather than via CREATE EXTENSION
 \echo Use "CREATE EXTENSION rangefiltersegmentsearch" to load this file. \quit
 
+-- Toy example c function that just returns the same field value
 CREATE or REPLACE FUNCTION segment_range(ts TIMESTAMP) RETURNS TIMESTAMP
 AS '$libdir/rangefiltersegmentsearch'
 LANGUAGE C IMMUTABLE STRICT;
 
+-- Toy example of a plpgsql routine that calls another
+-- c routine in this same extension
+CREATE OR REPLACE FUNCTION segment_range_wrapper(ts TIMESTAMP) RETURNS TIMESTAMP AS
+$$
+BEGIN
+  RETURN segment_range(ts);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Just an experimental c function testing how to return tuples given an input tbl
+CREATE OR REPLACE FUNCTION filter_segments_beta(tblname TEXT)
+  RETURNS SETOF TIMESTAMP
+AS '$libdir/filtersegments'
+LANGUAGE C IMMUTABLE STRICT;
 
 -- A function that performs this and only passes through the
 -- filtered value field (e.g., the detector's raw values)
@@ -54,7 +69,7 @@ BEGIN
       RETURN NEXT;
     END LOOP;
 END
-$$  LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 
 -- Same as above, but overloaded to pass through a second

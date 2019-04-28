@@ -9,7 +9,7 @@ REGRESS_OPTS  = --inputdir=tests         \
                 --load-extension=rangefiltersegmentsearch \
                 --load-language=plpgsql
 REGRESS       = $(patsubst tests/sql/%.sql,%,$(TESTS))
-MODULES = rangefiltersegmentsearch  # c module to build
+MODULES = $(patsubst %.c,%,$(wildcard src/*.c)) # c modules to build
 
 # postgres build stuff
 PG_CONFIG = pg_config
