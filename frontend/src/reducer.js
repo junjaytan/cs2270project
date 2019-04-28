@@ -4,7 +4,14 @@ const initialState = Immutable({
   // if true, means connection to express backend succeeded
   // (note that db connection and/or query itself may still fail)
   backendConnSuccess: null,
-  dbParams: {},
+  dbParams: {
+              host: 'localhost',
+              dbName: 'ecgdb',
+              user: 'postgres',
+              pw: 'postgres',
+              schema: "public",
+              metadataTable: "anomaly_meta"
+            },
   dbErrorMsg: '',   // used if db connection or query fails
   dbQuerySuccess: null,
   responseCode: null,  // express http response code
@@ -15,11 +22,15 @@ const initialState = Immutable({
   minVal: 0,
   maxVal: 300,
   error: "",
-  data: []
+  data: [],
+  loadingStats: false, // if spinner should be showing
+  loadingCharts: false
 });
 
 
 export default function reduce(state = initialState, action = {}) {
+  console.log(state);
+  console.log(action);
   switch (action.type) {
     case 'CHANGE_DATA':
       return state.merge({
@@ -51,7 +62,9 @@ export default function reduce(state = initialState, action = {}) {
       });
     case 'CHANGE_STATS':
       return state.merge({
-        stats: action.data
+        stats: action.data,
+        minVal: action.data.detectorMin,
+        maxVal: action.data.detectorMax
       });
     case 'CHANGE_QUERY_TYPE':
       return state.merge({

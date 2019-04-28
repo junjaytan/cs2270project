@@ -19,7 +19,7 @@ export function fetchDatasets(data) {
 }
 
 export function fetchStats(data) {
-  return({ type: 'CHANGE_STATS', data})
+  return({ type: 'CHANGE_STATS', data});
 }
 
 export function searchData(data) {

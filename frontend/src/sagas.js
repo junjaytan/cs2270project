@@ -1,7 +1,6 @@
-import { takeLatest, takeEvery, call, put, all } from 'redux-saga/effects';
+import { takeEvery, call, put, all } from 'redux-saga/effects';
 import Client from './client';
 import * as actions from './actions'
-import * as _ from 'lodash';
 
 const errorText = "Something went wrong.  Please refresh the page in a few minutes and try again.";
 
@@ -18,7 +17,7 @@ function* fetchDatasets(action) {
     let querySuccess = null;
     let respBody = null;
 
-    if (httpstatus != 200) {
+    if (httpstatus !== 200) {
       // 400 or 500 means the query failed.
       // This may be because your db connection params are wrong
       // and the db is not available there, or your query is malformed.
@@ -51,7 +50,7 @@ function* fetchStats(action) {
     let respBody = null;
     let queryErrText = '';
 
-    if (httpstatus != 200) {
+    if (httpstatus !== 200) {
       querySuccess = false;
       respBody = yield resp.text();
       queryErrText = respBody;
@@ -71,13 +70,27 @@ function* fetchStats(action) {
 function* searchData(action) {
 
   try {
-    const data = yield call(Client.searchData, action.payload);
-    console.log(data);
-    yield put(actions.searchData(data));
-  } catch(error) {
-    yield put(actions.changeError(errorText));
-  }
+    const resp = yield call(Client.searchData, action.payload);
+    let httpstatus = resp.status;
+    let querySuccess = null;
+    let respBody = null;
+    let queryErrText = '';
 
+    if (httpstatus !== 200) {
+      querySuccess = false;
+      respBody = yield resp.text();
+      queryErrText = respBody;
+    } else {
+      querySuccess = true;
+      respBody = yield resp.json();
+      yield put(actions.searchData(respBody));
+    }
+    yield put(actions.changeDbQuerySuccess(querySuccess))
+    yield put(actions.changeDbErrorMsg(queryErrText));
+  } catch(error) {
+    // Backend is not available!
+    yield put(actions.changeBackendConnSuccess(false));
+  }
 }
 
 // -------------ROOT SAGA-----------------

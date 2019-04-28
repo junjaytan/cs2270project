@@ -252,27 +252,37 @@ app.get('/datasetstats', function (req, res) {
 })
 
 app.get('/data', function (req, res) {
-  console.log(req.query);
-  let dbCon = 'postgres://postgres@localhost:5432/' + req.query.dataset;
-  let db = pgp(dbCon);
-  let table = 'NULL::public.' + req.query.table;
-  let ts_col = req.query.tscol;
-  let anomaly_col = req.query.thresholdcol;
-  let value_col = req.query.valuecol;
+  let datasetId = req.query.dataset;
+
+  if (!datasetId || !(datasetId in globalDatasets)) {
+    res.status(400);
+    res.send('Missing or unrecognized dataset name. ' +
+             'Please provide query param "dataset"');
+    return;
+  }
+
+  let table = 'NULL::' + globalDbSchema + '.' + datasetId;
+  let ts_col = globalDatasets[datasetId].getDateTimeColName();
+  let anomaly_col = globalDatasets[datasetId].getDetectorRawValuesColName();
+  let value_col = globalDatasets[datasetId].getValueColName();
   let min = Number(req.query.min);
   let max = Number(req.query.max);
-  console.log([table, ts_col, anomaly_col, value_col, min, max]);
-  db.any(`SELECT segment_start_ts as start_date, MAX(cur_ts) AS end_date, COUNT(*) AS number_points, json_agg(value_to_passthru ORDER BY cur_ts) AS json_agg
-  FROM filter_segments($1:raw, $2, $3, $4, $5, $6)
-  GROUP BY segment_start_ts
-  ORDER BY number_points DESC
-  LIMIT 10;`, [table, ts_col, anomaly_col, value_col, min, max])
+
+  globalDbconn.any(`SELECT segment_start_ts as start_date, MAX(cur_ts) AS end_date, COUNT(*) AS number_points, json_agg(value_to_passthru ORDER BY cur_ts) AS json_agg
+    FROM filter_segments($1:raw, $2, $3, $4, $5, $6)
+    GROUP BY segment_start_ts
+    ORDER BY number_points DESC
+    LIMIT 10;`, [table, ts_col, anomaly_col, value_col, min, max])
   .then(function (data) {
-    res.send(data)
+    res.status(200);
+    res.send(data);
   })
   .catch(function (error) {
+    let errorMsg = String(error);
+    res.status(500);
+    res.send(errorMsg);
     console.log('ERROR:', error)
   })
 })
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+app.listen(port, () => console.log(`App listening on port ${port}!`))

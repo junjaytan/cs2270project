@@ -15,21 +15,8 @@ class ChartOptions extends Component {
   constructor(props) {
     super(props);
 
-    // This contains the db connection params.
-    this.state = {
-      // These are default values that appear in the form.
-      db: {
-        host: 'localhost',
-        dbName: 'ecgdb',
-        user: 'postgres',
-        pw: 'postgres',
-        schema: "public",
-        metadataTable: "anomaly_meta",
-      },
-    }
-
-    this.changeDataset = this.changeDataset.bind(this);
     this.handleDbParamsChange = this.handleDbParamsChange.bind(this);
+    this.changeDataset = this.changeDataset.bind(this);
   }
 
   queryButton(q) {
@@ -126,17 +113,6 @@ class ChartOptions extends Component {
     }
   }
 
-  componentDidUpdate() {
-  }
-
-  // Callback handler to request backend to ping DB once state has been udpated
-  callFetchDataset() {
-    // Ensure dropDown menu and current selection is cleared,
-    // in case we are running a second connection and it fails.
-    this.props.changeSelectedDataset("");
-    this.props.fetchDatasets(this.state.db);
-  }
-
   // Called when user selects a new dataset
   changeDataset(dataset) {
     this.props.changeSelectedDataset(dataset);
@@ -146,30 +122,17 @@ class ChartOptions extends Component {
   }
 
   handleDbParamsChange(dbParams) {
-    this.setState({
-      db: {
-        host: dbParams.host,
-        dbName: dbParams.dbName,
-        user: dbParams.user,
-        pw: dbParams.pw,
-        schema: dbParams.schema,
-        metadataTable: dbParams.metadataTable,
-    }}, this.callFetchDataset);
-    // TODO: fix weird duplication...
-    this.props.changeDbParams({
-      host: dbParams.host,
-      dbName: dbParams.dbName,
-      user: dbParams.user,
-      pw: dbParams.pw,
-      schema: dbParams.schema,
-      metadataTable: dbParams.metadataTable,
-    });
+    console.log(dbParams)
+    this.props.changeDbParams(dbParams);
+    console.log(this.props.dbParams)
+    this.props.changeSelectedDataset("");
+    this.props.fetchDatasets(dbParams);
   }
 
   render() {
     return (
       <div className="chart-options">
-        <ConnectionSettingsForm connectParams={this.state.db} onConnectButtonClick={this.handleDbParamsChange}/>
+        <ConnectionSettingsForm connectParams={this.props.dbParams} onConnectButtonClick={this.handleDbParamsChange}/>
         <DatabaseConnStatusAlert backendConnSuccess={this.props.backendConnSuccess}
               dbQuerySuccess={this.props.dbQuerySuccess} dbErrMsg={this.props.dbErrorMsg}/>
         <hr />

@@ -34,10 +34,6 @@ class Client {
   async searchData(queryInfo) {
     console.log("getting data");
     let response = await fetch(SERVER_URL + "/data?dataset=" + queryInfo.dataset
-      + "&table=" + queryInfo.stats.data_tablename
-      + "&tscol=" + queryInfo.stats.ts_colname
-      + "&thresholdcol=" + queryInfo.stats.threshold_colname
-      + "&valuecol=" + queryInfo.stats.value_colname
       + "&min=" + queryInfo.min
       + "&max=" + queryInfo.max
     );
