@@ -43,46 +43,57 @@ export default class ConnectionSettingsForm extends Component {
 
   render() {
     return (
-      <div>
-      <h5>DB Connection Settings</h5>
-
-      <InputGroup size="sm">
+      <div className="mx-1">
+      <InputGroup className="my-1" size="sm">
         <InputGroupAddon addonType="prepend">
           <InputGroupText>Host</InputGroupText>
         </InputGroupAddon>
         <Input name="host" defaultValue={this.state.host} onChange={this.handleInputChange}/>
       </InputGroup>
-      <InputGroup size="sm">
-        <InputGroupAddon addonType="prepend">
-          <InputGroupText>User</InputGroupText>
-        </InputGroupAddon>
-        <Input name="user" defaultValue={this.state.user} onChange={this.handleInputChange}/>
-      </InputGroup>
-      <InputGroup size="sm">
-        <InputGroupAddon addonType="prepend">
-          <InputGroupText>Password</InputGroupText>
-        </InputGroupAddon>
-        <Input name="pw" type="password" defaultValue={this.state.pw} onChange={this.handleInputChange}/>
-      </InputGroup>
-      <InputGroup size="sm">
-        <InputGroupAddon addonType="prepend">
-          <InputGroupText>DB &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</InputGroupText>
-        </InputGroupAddon>
-        <Input name="dbName" defaultValue={this.state.dbName} onChange={this.handleInputChange}/>
-      </InputGroup>
-      <InputGroup size="sm">
-        <InputGroupAddon addonType="prepend">
-          <InputGroupText>Schema</InputGroupText>
-        </InputGroupAddon>
-        <Input name="schema" defaultValue={this.state.schema} onChange={this.handleInputChange}/>
-      </InputGroup>
-      <InputGroup size="sm">
+
+      <div className="form-row mb-1">
+        <div className="col-6">
+          <InputGroup size="sm">
+            <InputGroupAddon addonType="prepend">
+              <InputGroupText>DB &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</InputGroupText>
+            </InputGroupAddon>
+            <Input name="dbName" defaultValue={this.state.dbName} onChange={this.handleInputChange}/>
+          </InputGroup>
+        </div>
+        <div className="col-6">
+          <InputGroup size="sm">
+            <InputGroupAddon addonType="prepend">
+              <InputGroupText>User</InputGroupText>
+            </InputGroupAddon>
+            <Input name="user" defaultValue={this.state.user} onChange={this.handleInputChange}/>
+          </InputGroup>
+        </div>
+      </div>
+      <div className="form-row">
+        <div className="col-6">
+          <InputGroup size="sm">
+            <InputGroupAddon addonType="prepend">
+              <InputGroupText>Schema</InputGroupText>
+            </InputGroupAddon>
+            <Input name="schema" defaultValue={this.state.schema} onChange={this.handleInputChange}/>
+          </InputGroup>
+        </div>
+        <div className="col-6">
+          <InputGroup size="sm">
+            <InputGroupAddon addonType="prepend">
+              <InputGroupText>Password</InputGroupText>
+            </InputGroupAddon>
+            <Input name="pw" type="password" defaultValue={this.state.pw} onChange={this.handleInputChange}/>
+          </InputGroup>
+        </div>
+      </div>
+      <InputGroup className="mt-1" size="sm">
         <InputGroupAddon addonType="prepend">
           <InputGroupText>MetadataTable</InputGroupText>
         </InputGroupAddon>
         <Input name="metadataTable" defaultValue={this.state.metadataTable} onChange={this.handleInputChange}/>
       </InputGroup>
-      <Button color="secondary" size="sm" onClick={this.handleClick}>Connect</Button>
+      <Button className="my-2" color="secondary" size="sm" onClick={this.handleClick}>Connect</Button>
       </div>
     )
   }

@@ -10,7 +10,7 @@ export class ChartPane extends Component{
 
   headerDescription() {
     if (this.props.selectedDataset) {
-      return <h5> x length segments where { this.props.selectedDataset } is as you selected </h5>
+      return <h5> Longest 10 segments where { this.props.selectedDataset } is as you selected </h5>
     } else {
       return <h5> Follow the instructions on the left, to select a dataset to explore </h5>
     }
@@ -31,7 +31,7 @@ export class ChartPane extends Component{
       dt = new Date(dt.valueOf() + spanLength)
     })
 
-    var dataObj = {"data": newData, "id": `tsdata-`+id}
+    var dataObj = {"data": newData, "id": `tsdata-`+id, "start_date": startDate, "end_date": endDate, "number_points": n}
 
     return dataObj
   }
@@ -46,11 +46,18 @@ export class ChartPane extends Component{
 
     console.log(data)
 
+
+
     return (
       data.map((val) =>
-        <div className="chart-mini" key={val.id} >
-          <TSChart data={val.data} id={val.id}/>
-        </div>
+        <tr className="chart-mini" key={val.id} >
+          <td>{val.start_date.toISOString()}</td>
+          <td>{val.end_date.toISOString()}</td>
+          <td>{val.number_points}</td>
+          <td>
+            <TSChart data={val.data} id={val.id}/>
+          </td>
+        </tr>
       )
     )
   }
@@ -60,7 +67,11 @@ export class ChartPane extends Component{
       <div className="chartpane">
         { this.headerDescription() }
 
-        { this.chartMinis() }
+        <table>
+          <tbody>
+            { this.chartMinis() }
+          </tbody>
+        </table>
       </div>
     );
   }
@@ -71,9 +82,7 @@ function mapStateToProps(state) {
   return {
     selectedDataset: selectors.getSelectedDataset(state),
     data: selectors.getData(state),
-    queryType: selectors.getQueryType(state),
-    minVal: selectors.getMinVal(state),
-    maxVal: selectors.getMaxVal(state)
+    queryType: selectors.getQueryType(state)
   };
 }
 

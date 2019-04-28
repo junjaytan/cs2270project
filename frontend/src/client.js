@@ -36,6 +36,8 @@ class Client {
     let response = await fetch(SERVER_URL + "/data?dataset=" + queryInfo.dataset
       + "&min=" + queryInfo.min
       + "&max=" + queryInfo.max
+      + "&start=" + queryInfo.start
+      + "&end=" + queryInfo.end
     );
     return await response;
   }

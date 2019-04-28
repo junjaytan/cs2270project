@@ -57,7 +57,13 @@ function* fetchStats(action) {
     } else {
       querySuccess = true;
       respBody = yield resp.json();
+      let startTS = yield new Date(respBody.oldestTs).toISOString().slice(0,23);
+      let endTS = yield new Date(respBody.newestTs).toISOString().slice(0,23);
       yield put(actions.fetchStats(respBody));
+      yield put(actions.changeMinVal(respBody.detectorMin));
+      yield put(actions.changeMaxVal(respBody.detectorMax));
+      yield put(actions.changeStartTS(startTS));
+      yield put(actions.changeEndTS(endTS));
     }
     yield put(actions.changeDbQuerySuccess(querySuccess))
     yield put(actions.changeDbErrorMsg(queryErrText));

@@ -5,7 +5,7 @@ export var config = {
     "grid": false
   },
   "view": {
-    "width": window.innerWidth * .5,
+    "width": window.innerHeight * .06,
     "height": window.innerHeight * .06,
     "stroke": null
   },

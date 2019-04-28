@@ -24,7 +24,9 @@ const initialState = Immutable({
   error: "",
   data: [],
   loadingStats: false, // if spinner should be showing
-  loadingCharts: false
+  loadingCharts: false,
+  startTS: null,
+  endTS: null
 });
 
 
@@ -62,9 +64,7 @@ export default function reduce(state = initialState, action = {}) {
       });
     case 'CHANGE_STATS':
       return state.merge({
-        stats: action.data,
-        minVal: action.data.detectorMin,
-        maxVal: action.data.detectorMax
+        stats: action.data
       });
     case 'CHANGE_QUERY_TYPE':
       return state.merge({
@@ -77,6 +77,14 @@ export default function reduce(state = initialState, action = {}) {
     case 'CHANGE_MAX_VAL':
       return state.merge({
         maxVal: action.data
+      });
+    case 'CHANGE_START_TS':
+      return state.merge({
+        startTS: action.data
+      });
+    case 'CHANGE_END_TS':
+      return state.merge({
+        endTS: action.data
       });
     case 'CHANGE_ERROR':
       return state.merge({
@@ -129,6 +137,14 @@ export function getMinVal(state) {
 
 export function getMaxVal(state) {
   return state.maxVal;
+}
+
+export function getStartTS(state) {
+  return state.startTS;
+}
+
+export function getEndTS(state) {
+  return state.endTS;
 }
 
 export function getError(state) {

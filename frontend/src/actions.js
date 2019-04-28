@@ -14,6 +14,14 @@ export function changeMaxVal(data) {
   return({ type: 'CHANGE_MAX_VAL', data})
 }
 
+export function changeStartTS(data) {
+  return({ type: 'CHANGE_START_TS', data})
+}
+
+export function changeEndTS(data) {
+  return({ type: 'CHANGE_END_TS', data})
+}
+
 export function fetchDatasets(data) {
   return({ type: 'CHANGE_DATASETS', data})
 }

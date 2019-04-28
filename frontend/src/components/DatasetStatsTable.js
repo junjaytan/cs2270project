@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { Table } from 'reactstrap';
 
 export default class DatasetsStatsTable extends Component {
     constructor(props) {
@@ -7,7 +6,7 @@ export default class DatasetsStatsTable extends Component {
       }
 
     generateTableRows() {
-      if (!this.props.stats || Object.keys(this.props.stats).length == 0) {
+      if (!this.props.stats || Object.keys(this.props.stats).length === 0) {
         return (<tbody></tbody>);
       }
 
@@ -24,7 +23,7 @@ export default class DatasetsStatsTable extends Component {
       let thresholdStr = threshold.toLocaleString();
       let thresholdComparatorStr = this.props.stats.thresholdComparator;
       // Append comparator with threshold so it looks nice in UI (e.g., >2)
-      thresholdStr = thresholdComparatorStr + thresholdStr;
+      thresholdStr = thresholdComparatorStr + ' ' + thresholdStr;
 
       let detectorValMin = parseFloat(this.props.stats.detectorMin).toFixed(2);
       let detectorValMax = parseFloat(this.props.stats.detectorMax).toFixed(2)
@@ -32,35 +31,35 @@ export default class DatasetsStatsTable extends Component {
 
       return (
         <tbody>
-        <tr>
-          <td>Rows</td>
-          <td>{num_rows}</td>
-        </tr>
-        <tr>
-          <td>Anomaly threshold</td>
-          <td>{thresholdStr}</td>
-        </tr>
-        <tr>
-          <td>Detector value range</td>
-          <td>{detectorRangeStr}</td>
-        </tr>
-        <tr>
-          <td>Oldest timestamp</td>
-          <td>{oldestTsStr}</td>
-        </tr>
-        <tr>
-          <td>Newest timestamp</td>
-          <td>{newestTsStr}</td>
-        </tr>
-      </tbody>
+          <tr>
+            <th scope="row">Rows</th>
+            <td>{num_rows}</td>
+          </tr>
+          <tr>
+            <th scope="row">Anomaly threshold</th>
+            <td>{thresholdStr}</td>
+          </tr>
+          <tr>
+            <th scope="row">Detector value range</th>
+            <td>{detectorRangeStr}</td>
+          </tr>
+          <tr>
+            <th scope="row">Oldest timestamp</th>
+            <td>{oldestTsStr}</td>
+          </tr>
+          <tr>
+            <th scope="row">Newest timestamp</th>
+            <td>{newestTsStr}</td>
+          </tr>
+        </tbody>
       )
     }
 
     render() {
       return (
-        <Table responsive bordered size="sm" style={{'textAlign': 'left'}}>
-        {this.generateTableRows()}
-      </Table>
+        <table className="table table-sm text-left mb-0 font-weight-light" style={{fontSize: ".9em"}}>
+          { this.generateTableRows() }
+        </table>
       )
     }
   }

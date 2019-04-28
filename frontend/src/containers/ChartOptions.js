@@ -22,7 +22,7 @@ class ChartOptions extends Component {
   queryButton(q) {
     return (
       <button key={ q.query } type="radio"
-        className={this.props.queryType === q.query ? "btn btn-secondary active" : "btn btn-secondary" }
+        className={this.props.queryType.query === q.query ? "btn btn-secondary py-0 active" : "btn btn-secondary py-0" }
         onClick={() => this.props.changeQueryType(q)}
         >{ q.symbol }</button>
     )
@@ -30,87 +30,100 @@ class ChartOptions extends Component {
 
   queryFields() {
     return (
-      <div className="query-fields">
-        { this.props.queryType.fields.includes("min") &&
-          <div className="input-group input-group-sm my-2">
-            <div className="input-group-prepend">
-              <span className="input-group-text" id="min">≥</span>
-            </div>
-            <input
-              type="text"
-              className="form-control"
-              aria-label="Min Value"
-              aria-describedby="min"
-              value={ this.props.minVal }
-              onChange={ (event) => this.props.changeMinVal(event.target.value) }>
-            </input>
+      <div className="query-fields form-row">
+        <div className="input-group input-group-sm my-1 col-6">
+          <div className="input-group-prepend">
+            <span className="input-group-text" id="min">≥</span>
           </div>
-        }
-        { this.props.queryType.fields.length === 2 && <p className="my-0 py-0">AND</p> }
-        { this.props.queryType.fields.includes("max") &&
-          <div className="input-group input-group-sm my-2">
-            <div className="input-group-prepend">
-              <span className="input-group-text" id="max">≤</span>
-            </div>
-            <input
-              type="text"
-              className="form-control"
-              aria-label="Max Value"
-              aria-describedby="max"
-              value={ this.props.maxVal }
-              onChange={ (event) => this.props.changeMaxVal(event.target.value) }>
-            </input>
+          <input
+            type="text"
+            className="form-control"
+            aria-label="Min Value"
+            aria-describedby="min"
+            value={ this.props.minVal }
+            onChange={ (event) => this.props.changeMinVal(event.target.value) }>
+          </input>
+        </div>
+        <div className="input-group input-group-sm my-1 col-6">
+          <div className="input-group-prepend">
+            <span className="input-group-text" id="max">≤</span>
           </div>
-        }
+          <input
+            type="text"
+            className="form-control"
+            aria-label="Max Value"
+            aria-describedby="max"
+            value={ this.props.maxVal }
+            onChange={ (event) => this.props.changeMaxVal(event.target.value) }>
+          </input>
+        </div>
+      </div>
+    )
+  }
+
+  timeRange() {
+    return (
+      <div className="time-range form-row">
+        <div className="input-group input-group-sm my-1 col-6">
+          <div className="input-group-prepend">
+            <span className="input-group-text" id="min">≥</span>
+          </div>
+          <input
+            type="datetime-local"
+            className="form-control"
+            aria-label="Start Datetime"
+            aria-describedby="start"
+            value={ this.props.startTS }
+            onChange={ (event) => this.props.changeStartTS(event.target.value) }>
+          </input>
+        </div>
+        <div className="input-group input-group-sm my-1 col-6">
+          <div className="input-group-prepend">
+            <span className="input-group-text" id="max">≤</span>
+          </div>
+          <input
+            type="datetime-local"
+            className="form-control"
+            aria-label="End Datetime"
+            aria-describedby="end"
+            value={ this.props.endTS }
+            onChange={ (event) => this.props.changeEndTS(event.target.value) }>
+          </input>
+        </div>
       </div>
     )
   }
 
   querySection() {
-    var queries = [
-      {query: "le", symbol: "≤", fields: ["max"]},
-      {query: "range", symbol: "range", fields: ["min", "max"]},
-      {query: "ge", symbol: "≥", fields: ["min"]}
-    ]
-
-    if (this.props.selectedDataset) {
-      return (
-        <div className="query-selection">
-          <br/>
-          <p>Selct parameters:</p>
-
-          <div className="btn-group" role="group" aria-label="Query Type">
-            { queries.map((val) => this.queryButton(val)) }
-          </div>
-
-          { this.props.queryType.fields && this.queryFields() }
+    return (
+      <div className="query-selection">
+        <div className="anomaly-thresholds">
+          <p className="text-left mb-0 pb-0">Anomaly Thresholds</p>
+          { this.queryFields() }
         </div>
-      )
-    }
+        <div className="time-range">
+          <p className="text-left mb-0 pb-0">Time Range</p>
+          { this.timeRange() }
+        </div>
+      </div>
+    )
   }
 
   querySearch() {
-    if (this.props.queryType.query) {
-      let min = this.props.minVal
-      if (this.props.queryType.query === "le") {
-        min = 0
-      }
-
-      let max = this.props.maxVal
-      if (this.props.queryType.query === "ge") {
-        max = 300
-      }
-      return (
-        <button
-          type="button"
-          className="btn px-2 py-0 mx-1 btn-secondary clear-btn"
-          value={this.props.value}
-          onClick={ () => this.props.searchData(this.props.selectedDataset, this.props.stats, min, max) }
-          >
-          Search
-        </button>
-      )
-    }
+    let min = this.props.minVal
+    let max = this.props.maxVal
+    let start = this.props.startTS
+    let end = this.props.endTS
+    return (
+      <button
+        type="button"
+        className="btn px-2 py-0 mx-1 btn-secondary clear-btn"
+        value={this.props.value}
+        onClick={ () => this.props.searchData(this.props.selectedDataset, min, max, start, end) }
+        >
+        Search
+      </button>
+    )
   }
 
   // Called when user selects a new dataset
@@ -122,9 +135,7 @@ class ChartOptions extends Component {
   }
 
   handleDbParamsChange(dbParams) {
-    console.log(dbParams)
     this.props.changeDbParams(dbParams);
-    console.log(this.props.dbParams)
     this.props.changeSelectedDataset("");
     this.props.fetchDatasets(dbParams);
   }
@@ -132,27 +143,41 @@ class ChartOptions extends Component {
   render() {
     return (
       <div className="chart-options">
-        <ConnectionSettingsForm connectParams={this.props.dbParams} onConnectButtonClick={this.handleDbParamsChange}/>
-        <DatabaseConnStatusAlert backendConnSuccess={this.props.backendConnSuccess}
+        <div className="card mb-2">
+          <div className="card-header py-1">
+            DB Connection Settings
+          </div>
+          <ConnectionSettingsForm connectParams={this.props.dbParams} onConnectButtonClick={this.handleDbParamsChange}/>
+          { (!this.props.backendConnSuccess || !this.props.dbQuerySuccess) &&
+            <DatabaseConnStatusAlert backendConnSuccess={this.props.backendConnSuccess}
               dbQuerySuccess={this.props.dbQuerySuccess} dbErrMsg={this.props.dbErrorMsg}/>
-        <hr />
-        <Container>
-          <Row>
-            <Col>Select a dataset:</Col>
-            <Col><DropDown onClick={this.changeDataset} items={this.props.datasets}
-                    curItem={this.props.selectedDataset} />
-            </Col>
-          </Row>
-        </Container>
-        <hr />
-        <b>Dataset Statistics</b>
-        <DatasetStatsTable stats={this.props.stats}/>
+          }
+        </div>
 
-        { this.props.stats && this.querySection() }
+        { this.props.datasets.length > 0 &&
+          <div className="card mb-2">
+            <div className="card-header py-1">
+              Select Dataset: &nbsp;&nbsp;
+              <DropDown onClick={this.changeDataset} items={this.props.datasets}
+                      curItem={this.props.selectedDataset} />
+            </div>
+            <div className="card-body my-1 py-1 mx-1 px-0">
+              <DatasetStatsTable stats={this.props.stats}/>
+            </div>
+          </div>
+        }
 
-        <br/>
-
-        { this.querySearch() }
+        { this.props.endTS &&
+          <div className="card mb-2">
+            <div className="card-header py-1">
+              Query Parameters
+            </div>
+            <div className="card-body my-1 py-1 mx-1 px-0">
+              { this.querySection() }
+              { this.querySearch() }
+            </div>
+          </div>
+        }
       </div>
     )
   }
@@ -170,20 +195,24 @@ function mapStateToProps(state) {
     datasets: selectors.getDatasets(state),
     queryType: selectors.getQueryType(state),
     minVal: selectors.getMinVal(state),
-    maxVal: selectors.getMaxVal(state)
+    maxVal: selectors.getMaxVal(state),
+    startTS: selectors.getStartTS(state),
+    endTS: selectors.getEndTS(state)
   };
 }
 
 function mapDispatchToProps(dispatch) {
   return {
-    searchData: (dataset, stats, min, max) => dispatch({ type: 'SEARCH_DATA', payload: {dataset: dataset, stats: stats, min: min, max: max }}),
+    searchData: (dataset, min, max, start, end) => dispatch({ type: 'SEARCH_DATA', payload: {dataset: dataset, min: min, max: max, start: start, end: end }}),
     changeSelectedDataset: (val) => dispatch(actions.changeSelectedDataset(val)),
     changeDbParams: (val) => dispatch(actions.changeDbParams(val)),
     fetchDatasets: (dbParams) => dispatch({ type: 'FETCH_DATASETS', payload: {dbParams: dbParams} }),
     fetchStats: (dataset) => dispatch({ type: 'FETCH_STATS', payload: {dataset: dataset} }),
     changeQueryType: (val) => dispatch(actions.changeQueryType(val)),
     changeMinVal: (val) => dispatch(actions.changeMinVal(val)),
-    changeMaxVal: (val) => dispatch(actions.changeMaxVal(val))
+    changeMaxVal: (val) => dispatch(actions.changeMaxVal(val)),
+    changeStartTS: (val) => dispatch(actions.changeStartTS(val)),
+    changeEndTS: (val) => dispatch(actions.changeEndTS(val))
   };
 }
 
