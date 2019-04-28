@@ -9,6 +9,7 @@ import DropDown from '../components/DropDown';
 import ConnectionSettingsForm from '../components/ConnectionSettingsForm'
 import DatasetStatsTable from '../components/DatasetStatsTable'
 import DatabaseConnStatusAlert from '../components/DatabaseConnStatusAlert'
+import PreviewDataForm from '../components/PreviewDataForm'
 
 class ChartOptions extends Component {
 
@@ -185,10 +186,16 @@ class ChartOptions extends Component {
         <b>Dataset Statistics</b>
         <DatasetStatsTable stats={this.props.stats}/>
 
-        { this.props.stats && this.querySection() }
+        <hr />
+        <b>Preview Data</b>
+        <PreviewDataForm />
 
-        <br/>
+        <hr />
+        <b>Explore Data</b>
 
+        <hr />
+        <b>Segment Search By Detector Output Value</b>
+        { this.querySection() }
         { this.querySearch() }
       </div>
     )

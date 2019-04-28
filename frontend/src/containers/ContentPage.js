@@ -3,7 +3,8 @@ import { connect } from 'react-redux';
 import * as selectors from '../reducer';
 import * as actions from '../actions'
 import Spinner from '../components/Spinner';
-import ChartPane from './ChartPane';
+//import ChartPane from './ChartPane';
+import TSChartPane from './TSChartPane';
 import ChartOptions from './ChartOptions';
 import ChartStats from '../components/ChartStats';
 
@@ -22,7 +23,8 @@ export class ContentPage extends Component {
 
         <div className="right-pane">
           <div className="content-pane">
-            <ChartPane />
+            {/*<ChartPane />*/}
+            <TSChartPane />
           </div>
         </div>
       </div>

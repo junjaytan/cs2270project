@@ -1,5 +1,9 @@
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Timeseries Chart Notes
+
+* Pan/Zoom timeseries plots use the [React Timeseries Charts](https://www.npmjs.com/package/react-timeseries-charts) npm library, which is based on D3, React, and pond.js.
+
 ## Available Scripts
 
 In the project directory, you can run:
