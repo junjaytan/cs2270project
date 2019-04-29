@@ -38,6 +38,10 @@ class Dataset {
     this.thresholdComparator = null;
 
     this.stats = null;  // A plain ol JS object.
+
+    // Whether table has appended lagging timestamp column
+    this.laggingTSColExists = false;
+    this.laggingTSCol = null;  // name of column
   }
 
   setDatetimeColName(colName) {
@@ -87,6 +91,23 @@ class Dataset {
   getStats() {
     // Returns null if no stats have been calculated yet.
     return this.stats;
+  }
+
+  setLaggingTSColName(value) {
+    // This sets it appropriately even if input is null or empty string.
+    console.log('Lagging TS Col name is: ' + value);
+    if (value) {
+      this.laggingTSCol = value;
+      this.laggingTSColExists = true;
+    }
+  }
+
+  getLaggingTSColName() {
+    return this.laggingTSCol;
+  }
+
+  hasLaggingTSCol() {
+    return this.laggingTSColExists;
   }
 }
 
@@ -148,6 +169,7 @@ app.post('/datasets', function (req, res) {
   let valueColNameMetaCol = 'value_colname';
   let thresholdCol = 'threshold';  // this col holds the actual numerical threshold
   let thresholdComparatorCol = 'comparator';
+  let prevTSCol = 'ts_lag_colname';
   let port = globalDbPort;
 
   // Verify required params are not empty before trying to connect to DB.
@@ -179,11 +201,18 @@ app.post('/datasets', function (req, res) {
         let curDataTableName = curTblRow[datatableNameColumn];
         globalDatasets[curDataTableName] = new Dataset(curDataTableName);
 
-        globalDatasets[curDataTableName].setDatetimeColName(curTblRow[datetimeColNameMetaCol]);
-        globalDatasets[curDataTableName].setDetectorRawValuesColName(curTblRow[thresholdColNameMetaCol]);
-        globalDatasets[curDataTableName].setValueColName(curTblRow[valueColNameMetaCol]);
-        globalDatasets[curDataTableName].setThreshold(parseFloat(curTblRow[thresholdCol]));
-        globalDatasets[curDataTableName].setThresholdComparatorStr(curTblRow[thresholdComparatorCol]);
+        globalDatasets[curDataTableName].setDatetimeColName(
+          curTblRow[datetimeColNameMetaCol]);
+        globalDatasets[curDataTableName].setDetectorRawValuesColName(
+          curTblRow[thresholdColNameMetaCol]);
+        globalDatasets[curDataTableName].setValueColName(
+          curTblRow[valueColNameMetaCol]);
+        globalDatasets[curDataTableName].setThreshold(parseFloat(
+          curTblRow[thresholdCol]));
+        globalDatasets[curDataTableName].setThresholdComparatorStr(
+          curTblRow[thresholdComparatorCol]);
+        globalDatasets[curDataTableName].setLaggingTSColName(
+          curTblRow[prevTSCol]);
       }
       res.send(data.map( (val) => val[datatableNameColumn]));
     })
@@ -263,6 +292,7 @@ app.get('/data', function (req, res) {
 
   let table = 'NULL::' + globalDbSchema + '.' + datasetId;
   let ts_col = globalDatasets[datasetId].getDateTimeColName();
+  let prev_ts_col = globalDatasets[datasetId].getLaggingTSColName();
   let anomaly_col = globalDatasets[datasetId].getDetectorRawValuesColName();
   let value_col = globalDatasets[datasetId].getValueColName();
   let min = Number(req.query.min);
@@ -270,13 +300,35 @@ app.get('/data', function (req, res) {
   let start = req.query.start;
   let end = req.query.end;
 
-  globalDbconn.any(`SELECT segment_start_ts as start_date, MAX(cur_ts) AS end_date, COUNT(*) AS number_points, json_agg(value_to_passthru ORDER BY cur_ts) AS json_agg
+  let query = '';
+  let params = [];
+  if (globalDatasets[datasetId].hasLaggingTSCol()) {
+    // If there is an additional column with lagging timestamp, run the appropriate
+    // faster function
+    query = `SELECT segment_start_ts as start_date, MAX(cur_ts) AS end_date,
+    COUNT(*) AS number_points, json_agg(value_to_passthru ORDER BY cur_ts) AS json_agg
+    FROM filter_segments($1:raw, $2, $3, $4, $5, $6, $7)
+    WHERE segment_start_ts >= $8
+    AND segment_start_ts <= $9
+    GROUP BY segment_start_ts
+    ORDER BY number_points DESC
+    LIMIT 10;`;
+    params = [table, ts_col, prev_ts_col, anomaly_col, value_col, min, max, start, end];
+  } else {
+    query = `SELECT segment_start_ts as start_date, MAX(cur_ts) AS end_date,
+    COUNT(*) AS number_points, json_agg(value_to_passthru ORDER BY cur_ts) AS json_agg
     FROM filter_segments($1:raw, $2, $3, $4, $5, $6)
     WHERE segment_start_ts >= $7
     AND segment_start_ts <= $8
     GROUP BY segment_start_ts
     ORDER BY number_points DESC
-    LIMIT 10;`, [table, ts_col, anomaly_col, value_col, min, max, start, end])
+    LIMIT 10;`;
+    params = [table, ts_col, anomaly_col, value_col, min, max, start, end];
+  }
+  console.log('running segment search query:');
+  console.log(query);
+
+  globalDbconn.any(query, params)
   .then(function (data) {
     res.status(200);
     res.send(data);
