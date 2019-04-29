@@ -5,6 +5,7 @@ import * as selectors from '../reducer';
 import * as actions from '../actions';
 import Button from '../components/Button';
 import DropDown from '../components/DropDown';
+import Spinner from '../components/Spinner';
 
 import ConnectionSettingsForm from '../components/ConnectionSettingsForm'
 import DatasetStatsTable from '../components/DatasetStatsTable'
@@ -162,7 +163,11 @@ class ChartOptions extends Component {
                       curItem={this.props.selectedDataset} />
             </div>
             <div className="card-body my-1 py-1 mx-1 px-0">
-              <DatasetStatsTable stats={this.props.stats}/>
+              { this.props.loading ?
+                <Spinner loading={this.props.loading} />
+                :
+                <DatasetStatsTable stats={this.props.stats}/>
+              }
             </div>
           </div>
         }
@@ -197,7 +202,8 @@ function mapStateToProps(state) {
     minVal: selectors.getMinVal(state),
     maxVal: selectors.getMaxVal(state),
     startTS: selectors.getStartTS(state),
-    endTS: selectors.getEndTS(state)
+    endTS: selectors.getEndTS(state),
+    loading: selectors.getLoadingStats(state)
   };
 }
 

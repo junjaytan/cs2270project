@@ -22,6 +22,14 @@ export function changeEndTS(data) {
   return({ type: 'CHANGE_END_TS', data})
 }
 
+export function changeLoadingStats(data) {
+  return({ type: 'CHANGE_LOADING_STATS', data})
+}
+
+export function changeLoadingCharts(data) {
+  return({ type: 'CHANGE_LOADING_CHART', data})
+}
+
 export function fetchDatasets(data) {
   return({ type: 'CHANGE_DATASETS', data})
 }

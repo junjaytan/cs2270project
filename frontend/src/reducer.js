@@ -86,6 +86,14 @@ export default function reduce(state = initialState, action = {}) {
       return state.merge({
         endTS: action.data
       });
+    case 'CHANGE_LOADING_STATS':
+      return state.merge({
+        loadingStats: action.data
+      });
+    case 'CHANGE_LOADING_CHART':
+      return state.merge({
+        loadingCharts: action.data
+      });
     case 'CHANGE_ERROR':
       return state.merge({
         error: action.data
@@ -145,6 +153,14 @@ export function getStartTS(state) {
 
 export function getEndTS(state) {
   return state.endTS;
+}
+
+export function getLoadingStats(state) {
+  return state.loadingStats;
+}
+
+export function getLoadingCharts(state) {
+  return state.loadingCharts;
 }
 
 export function getError(state) {

@@ -4,6 +4,7 @@ import * as selectors from '../reducer';
 import * as actions from '../actions';
 import TSChart from '../components/TSChart';
 import OverviewChart from '../components/OverviewChart';
+import Spinner from '../components/Spinner';
 import * as _ from 'lodash';
 
 export class ChartPane extends Component{
@@ -66,12 +67,14 @@ export class ChartPane extends Component{
     return(
       <div className="chartpane">
         { this.headerDescription() }
+        {this.props.loading ?
+          <Spinner loading={this.props.loading} />
+        : <table>
+            <tbody>
+              { this.chartMinis() }
+            </tbody>
+          </table> }
 
-        <table>
-          <tbody>
-            { this.chartMinis() }
-          </tbody>
-        </table>
       </div>
     );
   }
@@ -82,7 +85,8 @@ function mapStateToProps(state) {
   return {
     selectedDataset: selectors.getSelectedDataset(state),
     data: selectors.getData(state),
-    queryType: selectors.getQueryType(state)
+    queryType: selectors.getQueryType(state),
+    loading: selectors.getLoadingCharts(state)
   };
 }
 

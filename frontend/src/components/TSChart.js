@@ -6,7 +6,6 @@ import errorSpec from './ErrorSpec';
 export default class TSChart extends Component {
 
   componentDidMount() {
-
     var spec = this._spec();
 
     var data = this.props.data;

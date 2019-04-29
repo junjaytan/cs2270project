@@ -44,6 +44,7 @@ function* fetchStats(action) {
   yield put(actions.fetchStats({}));
 
   try {
+    yield put(actions.changeLoadingStats(true));
     const resp = yield call(Client.getStats, action.payload.dataset);
     let httpstatus = resp.status;
     let querySuccess = null;
@@ -67,6 +68,7 @@ function* fetchStats(action) {
     }
     yield put(actions.changeDbQuerySuccess(querySuccess))
     yield put(actions.changeDbErrorMsg(queryErrText));
+    yield put(actions.changeLoadingStats(false));
   } catch(error) {
     // Backend is not available!
     yield put(actions.changeBackendConnSuccess(false));
@@ -76,6 +78,7 @@ function* fetchStats(action) {
 function* searchData(action) {
 
   try {
+    yield put(actions.changeLoadingCharts(true));
     const resp = yield call(Client.searchData, action.payload);
     let httpstatus = resp.status;
     let querySuccess = null;
@@ -93,6 +96,7 @@ function* searchData(action) {
     }
     yield put(actions.changeDbQuerySuccess(querySuccess))
     yield put(actions.changeDbErrorMsg(queryErrText));
+    yield put(actions.changeLoadingCharts(false));
   } catch(error) {
     // Backend is not available!
     yield put(actions.changeBackendConnSuccess(false));
