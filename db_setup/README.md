@@ -54,5 +54,11 @@ Now you will need to add the extension to provide the `filter_segments()` functi
     * Example query:
       * ```SQL
         SELECT *
-        FROM filter_segments(NULL::public.ecg_data_with_lag, 'ecg_datetime', 'ecg_datetime_prev',                                     'anomaly_likelihood', 'ecg_mv', 78, 300);
+        FROM filter_segments(NULL::public.ecg_data_with_lag, 'ecg_datetime', 'ecg_datetime_prev', 'anomaly_likelihood', 'ecg_mv', 78, 300) LIMIT 10;
+        ```
+  * `filter_segments(TABLENAME, DATETIME_COL_NAME, PREVIOUS_DATETIME_COL_NAME, START_DATE, END_DATE VALUE_TO_FILTER_COL_NAME, VALUE_TO_PASSTHRU_COLN_NAME)`: uses the additional lagging timestamp column along with a date range filter to run an even faster segment filter search depending on your time range.
+    * Example query:
+      * ```SQL
+        SELECT *
+        FROM filter_segments(NULL::public.ecg_data_with_lag, 'ecg_datetime', 'ecg_datetime_prev', '2018-07-01 12:00:00', '2019-01-12', 'anomaly_likelihood', 'ecg_mv', 78, 300) LIMIT 10;
         ```

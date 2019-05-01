@@ -318,9 +318,7 @@ app.get('/data', function (req, res) {
     // faster function
     query = `SELECT segment_start_ts as start_date, MAX(cur_ts) AS end_date,
     COUNT(*) AS number_points, json_agg(value_to_passthru ORDER BY cur_ts) AS json_agg
-    FROM filter_segments($1:raw, $2, $3, $4, $5, $6, $7)
-    WHERE segment_start_ts >= $8
-    AND segment_start_ts <= $9
+    FROM filter_segments($1:raw, $2, $3, $8, $9, $4, $5, $6, $7)
     GROUP BY segment_start_ts
     ORDER BY number_points DESC
     LIMIT 10;`;

@@ -154,3 +154,52 @@ BEGIN
     END LOOP;
 END
 $$  LANGUAGE plpgsql;
+
+-- Overloaded function that uses an additional column holding previous timestamp
+-- to prefilter based on a date range. Note that a table that has no previous timestamp
+-- would not benefit from date filtering because we would need the entire data
+-- to generate the lagging timestamps anyway.
+CREATE OR REPLACE FUNCTION filter_segments(_tbl ANYELEMENT, datecol TEXT, prev_datecol TEXT,
+start_ts TIMESTAMP, end_ts TIMESTAMP,
+valuecol_to_filter TEXT, valuecol_to_passthru TEXT,
+min_value NUMERIC, max_value NUMERIC)
+  RETURNS TABLE (segment_start_ts TIMESTAMP, cur_ts TIMESTAMP,
+                 prev_row_ts TIMESTAMP, value_to_filter NUMERIC,
+                 value_to_passthru NUMERIC) AS
+$$
+DECLARE
+  -- This is a temp variable we use to store as we iterate
+  loop_previous_cur_ts TIMESTAMP := NULL;
+BEGIN
+  FOR cur_ts, prev_row_ts, value_to_filter, value_to_passthru IN
+  EXECUTE
+    format('SELECT %s, %s, %s, %s FROM %s WHERE %s >= %s AND %s <= %s AND %s <= ''%s'' '
+          'AND %s >= ''%s'' ORDER BY %s',
+           datecol, prev_datecol, valuecol_to_filter, valuecol_to_passthru,
+	   pg_typeof(_tbl), valuecol_to_filter, min_value, valuecol_to_filter, max_value,
+           datecol, end_ts, datecol, start_ts, datecol)
+    LOOP
+      -- First timestamp in all time!
+      IF prev_row_ts IS NULL THEN
+        segment_start_ts := cur_ts;
+        loop_previous_cur_ts := cur_ts;
+      ELSE
+        -- if we've not yet populated the temp var for previous row's cur_ts
+        IF loop_previous_cur_ts IS NULL THEN
+          -- This is the first segment we've encountered
+          segment_start_ts := cur_ts;
+          loop_previous_cur_ts := cur_ts;
+        ELSIF prev_row_ts = loop_previous_cur_ts THEN
+          -- Is a continuation of previous segment!
+          loop_previous_cur_ts := cur_ts;
+        ELSE
+          -- Is a new segment because there are points not in the filter range
+          -- between this and the previous value in the filter range
+          segment_start_ts := cur_ts;
+          loop_previous_cur_ts := cur_ts;
+        END IF;
+      END IF;
+      RETURN NEXT;
+    END LOOP;
+END
+$$  LANGUAGE plpgsql;
