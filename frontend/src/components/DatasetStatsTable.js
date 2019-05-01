@@ -19,6 +19,9 @@ export default class DatasetsStatsTable extends Component {
       let newestTs = new Date(this.props.stats.newestTs);
       let newestTsStr = newestTs.toISOString();
 
+      let numAnomPoints = this.props.stats.num_anomalous_points;
+      numAnomPoints = numAnomPoints.toLocaleString();
+
       let threshold = parseFloat(this.props.stats.threshold);
       let thresholdStr = threshold.toLocaleString();
       let thresholdComparatorStr = this.props.stats.thresholdComparator;
@@ -38,6 +41,10 @@ export default class DatasetsStatsTable extends Component {
           <tr>
             <th scope="row">Anomaly threshold</th>
             <td>{thresholdStr}</td>
+          </tr>
+          <tr>
+            <th scope="row">Num Anomalous Points</th>
+            <td>{numAnomPoints}</td>
           </tr>
           <tr>
             <th scope="row">Detector value range</th>

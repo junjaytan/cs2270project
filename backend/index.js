@@ -95,7 +95,7 @@ class Dataset {
 
   setLaggingTSColName(value) {
     // This sets it appropriately even if input is null or empty string.
-    console.log('Lagging TS Col name is: ' + value);
+    // console.log('Lagging TS Col name is: ' + value);
     if (value) {
       this.laggingTSCol = value;
       this.laggingTSColExists = true;
@@ -239,6 +239,8 @@ app.get('/datasetstats', function (req, res) {
 
   let ts_colname = globalDatasets[datasetId].getDateTimeColName();
   let detectorValColName = globalDatasets[datasetId].getDetectorRawValuesColName();
+  let detectorValComparatorStr = globalDatasets[datasetId].getThresholdComparatorStr();
+  let anomalyThreshold = globalDatasets[datasetId].getThreshold();
 
   // Use previously cache stats if available. Otherwise, cache after we get results.
   if (globalDatasets[datasetId].getStats()) {
@@ -253,31 +255,40 @@ app.get('/datasetstats', function (req, res) {
   query = `SELECT COUNT(*) AS num_rows, MIN("${ts_colname}") as oldest_ts, ` +
   `MAX("${ts_colname}") AS newest_ts, MIN("${detectorValColName}") as detector_min, ` +
   `MAX("${detectorValColName}") as detector_max FROM "${globalDbSchema}"."${datasetId}";`;
-  console.log('running query:');
-  console.log(query);
 
-  globalDbconn.one(query)
-    .then(function (data) {
-      console.log("success query");
-      result = {
-        'rows': parseInt(data['num_rows']),
-        'oldestTs': String(data['oldest_ts']),  // just return dates as strings
-        'newestTs': String(data['newest_ts']),
-        'threshold': globalDatasets[datasetId].getThreshold(),
-        'thresholdComparator': globalDatasets[datasetId].getThresholdComparatorStr(),
-        'detectorMin': data['detector_min'],
-        'detectorMax': data['detector_max']
-      }
-      globalDatasets[datasetId].setStats(result);  // cache in JSON
+  // Also tally how many points are above the anomaly threshold.
+  anomaly_count_query = `SELECT COUNT(*) AS num_rows FROM ` +
+                        `"${globalDbSchema}"."${datasetId}" WHERE ` +
+                        `"${detectorValColName}" ${detectorValComparatorStr} ${anomalyThreshold};`;
 
-      res.status(200);
-      res.send(result);
-    })
-    .catch(function (error) {
-      let errorMsg = String(error);
-      res.status(500);
-      res.send(errorMsg);
-    })
+  let result = {}
+  // Note that multiple queries must be chained.
+  // See: https://github.com/vitaly-t/pg-promise/wiki/Chaining-Queries
+  globalDbconn.task(t => {
+    return t.one(query)
+      .then(data => {
+        result['rows'] = parseInt(data['num_rows']);
+        result['oldestTs'] = String(data['oldest_ts']);  // just return dates as strings
+        result['newestTs'] = String(data['newest_ts']);
+        result['threshold'] = globalDatasets[datasetId].getThreshold();
+        result['thresholdComparator'] = globalDatasets[datasetId].getThresholdComparatorStr();
+        result['detectorMin'] = data['detector_min'];
+        result['detectorMax'] = data['detector_max'];
+
+        return t.one(anomaly_count_query);
+      });
+  })
+  .then(anomaly_data => {
+    result['num_anomalous_points'] = parseInt(anomaly_data['num_rows']);
+    globalDatasets[datasetId].setStats(result);  // cache in JSON
+    res.status(200);
+    res.send(result);
+  })
+  .catch(function (error) {
+    let errorMsg = String(error);
+    res.status(500);
+    res.send(errorMsg);
+  })
 })
 
 app.get('/data', function (req, res) {
@@ -325,8 +336,7 @@ app.get('/data', function (req, res) {
     LIMIT 10;`;
     params = [table, ts_col, anomaly_col, value_col, min, max, start, end];
   }
-  console.log('running segment search query:');
-  console.log(query);
+  console.log(`running segment search query on ${datasetId}`);
 
   globalDbconn.any(query, params)
   .then(function (data) {

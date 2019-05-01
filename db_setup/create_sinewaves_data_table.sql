@@ -15,5 +15,5 @@ CREATE INDEX ON sinewaves_data(sine2_value);
 
 /*
 --To load data, run something similar to this command
-psql -U postgres -d testdata -h localhost -c "\COPY sinewaves_data FROM sine_waves_data.csv CSV HEADER"
+psql -U postgres -d ecgdb -h localhost -c "\COPY sinewaves_data FROM sine_waves_data.csv CSV HEADER"
 */
