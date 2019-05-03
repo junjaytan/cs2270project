@@ -2,8 +2,6 @@ import { takeEvery, call, put, all } from 'redux-saga/effects';
 import Client from './client';
 import * as actions from './actions'
 
-const errorText = "Something went wrong.  Please refresh the page in a few minutes and try again.";
-
 // -------------FETCHING SAGAS -----------------
 function* fetchDatasets(action) {
   yield put(actions.fetchDatasets([]));  // Reset datasets dropdown to empty
@@ -61,8 +59,17 @@ function* fetchStats(action) {
       let startTS = yield new Date(respBody.oldestTs).toISOString().slice(0,23);
       let endTS = yield new Date(respBody.newestTs).toISOString().slice(0,23);
       yield put(actions.fetchStats(respBody));
-      yield put(actions.changeMinVal(respBody.detectorMin));
-      yield put(actions.changeMaxVal(respBody.detectorMax));
+      if (respBody.thresholdComparator === ">="){
+        yield put(actions.changeMinVal(respBody.threshold));
+        yield put(actions.changeMaxVal(respBody.detectorMax));
+      } else if (respBody.thresholdComparator === "<=") {
+        yield put(actions.changeMinVal(respBody.detectorMin));
+        yield put(actions.changeMaxVal(respBody.threshold));
+      } else{
+        yield put(actions.changeMinVal(respBody.detectorMin));
+        yield put(actions.changeMaxVal(respBody.detectorMax));
+      }
+
       yield put(actions.changeStartTS(startTS));
       yield put(actions.changeEndTS(endTS));
     }

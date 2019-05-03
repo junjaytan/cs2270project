@@ -61,3 +61,11 @@ export function changeDbQuerySuccess(data) {
 export function changeDbErrorMsg(data) {
   return({ type: 'CHANGE_DB_ERROR_MSG', data});
 }
+
+export function changeChartPane(data) {
+  return({ type: 'CHANGE_CHART_PANE', data})
+}
+
+export function changeMainChart(data) {
+  return({ type: 'CHANGE_MAIN_CHART', data})
+}

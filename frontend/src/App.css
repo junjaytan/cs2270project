@@ -59,35 +59,21 @@ body {
 }
 
 .content-pane {
-  background: lightGrey;
-  padding: 5px;
+  background-color: rgba(0,0,0,.03);
+  padding: 10px;
   height: 100%;
-  border-width: 5px;
-  border-style: solid;
-  border-color: white;
-
-  color: white;
-  /*font-weight: bold;*/
   font-size: 1em;
   text-align: center;
+  border: 1px solid rgba(0,0,0,.125);
+  border-radius: .25rem;
 }
 
 .chartpane {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  justify-content: space-between;
-  height: 100%
-}
+  height: 100%;
 
-.ts-chart {
-  order: 1;
-  flex-grow: 4;
-}
-
-.overview-chart {
-  order: 2;
-  flex-grow: 1;
 }
 
 .query-fields input {
@@ -96,4 +82,12 @@ body {
 
 .card-header {
   font-weight: 600;
+}
+
+.ts-table td {
+  vertical-align: middle;
+}
+
+.ts-mini {
+  padding-right: 3px !important;
 }

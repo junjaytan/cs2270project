@@ -26,7 +26,9 @@ const initialState = Immutable({
   loadingStats: false, // if spinner should be showing
   loadingCharts: false,
   startTS: null,
-  endTS: null
+  endTS: null,
+  chartPane: "tsmini",
+  mainChart: { startTS: null, endTS: null }
 });
 
 
@@ -93,6 +95,14 @@ export default function reduce(state = initialState, action = {}) {
     case 'CHANGE_LOADING_CHART':
       return state.merge({
         loadingCharts: action.data
+      });
+    case 'CHANGE_CHART_PANE':
+      return state.merge({
+        chartPane: action.data
+      });
+    case 'CHANGE_MAIN_CHART':
+      return state.merge({
+        mainChart: action.data
       });
     case 'CHANGE_ERROR':
       return state.merge({
@@ -161,6 +171,14 @@ export function getLoadingStats(state) {
 
 export function getLoadingCharts(state) {
   return state.loadingCharts;
+}
+
+export function getChartPane(state) {
+  return state.chartPane;
+}
+
+export function getMainChart(state) {
+  return state.mainChart;
 }
 
 export function getError(state) {

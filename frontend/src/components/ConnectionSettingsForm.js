@@ -93,7 +93,7 @@ export default class ConnectionSettingsForm extends Component {
         </InputGroupAddon>
         <Input name="metadataTable" defaultValue={this.state.metadataTable} onChange={this.handleInputChange}/>
       </InputGroup>
-      <Button className="my-2" color="secondary" size="sm" onClick={this.handleClick}>Connect</Button>
+      <Button className="my-2 py-0" color="secondary" size="sm" onClick={this.handleClick}>Connect</Button>
       </div>
     )
   }

@@ -1,9 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { Container, Row, Col } from 'reactstrap';
 import * as selectors from '../reducer';
 import * as actions from '../actions';
-import Button from '../components/Button';
 import DropDown from '../components/DropDown';
 import Spinner from '../components/Spinner';
 
@@ -118,7 +116,7 @@ class ChartOptions extends Component {
     return (
       <button
         type="button"
-        className="btn px-2 py-0 mx-1 btn-secondary clear-btn"
+        className="btn px-2 py-0 my-1 mx-1 btn-secondary clear-btn"
         value={this.props.value}
         onClick={ () => this.props.searchData(this.props.selectedDataset, min, max, start, end) }
         >

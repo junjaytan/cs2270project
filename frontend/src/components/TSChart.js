@@ -60,7 +60,7 @@ export default class TSChart extends Component {
 
   render() {
     return(
-      <div id={this.props.id}></div>
+      <div className="ts-mini" id={this.props.id}></div>
     )
   }
 }

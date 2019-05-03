@@ -1,9 +1,6 @@
 import React, { Component } from 'react';
 
 export default class DatasetsStatsTable extends Component {
-    constructor(props) {
-        super(props);
-      }
 
     generateTableRows() {
       if (!this.props.stats || Object.keys(this.props.stats).length === 0) {

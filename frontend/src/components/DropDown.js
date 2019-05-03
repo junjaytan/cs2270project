@@ -26,7 +26,7 @@ export default class DropDown extends Component {
   render() {
     return (
       <ButtonDropdown className="py-0 my-0" size="sm" isOpen={this.state.dropdownOpen} toggle={this.toggle}>
-        <DropdownToggle caret>
+        <DropdownToggle className="py-0 my-0" caret>
           { this.props.curItem ? this.props.curItem : "Select"}
         </DropdownToggle>
         <DropdownMenu>

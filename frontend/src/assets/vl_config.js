@@ -5,8 +5,8 @@ export var config = {
     "grid": false
   },
   "view": {
-    "width": window.innerHeight * .06,
-    "height": window.innerHeight * .06,
+    "width": window.innerHeight * .12,
+    "height": window.innerHeight * .05,
     "stroke": null
   },
   "title": {

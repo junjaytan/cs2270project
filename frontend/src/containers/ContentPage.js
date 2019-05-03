@@ -2,10 +2,8 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import * as selectors from '../reducer';
 import * as actions from '../actions'
-import Spinner from '../components/Spinner';
 import ChartPane from './ChartPane';
 import ChartOptions from './ChartOptions';
-import ChartStats from '../components/ChartStats';
 
 export class ContentPage extends Component {
 
@@ -13,14 +11,14 @@ export class ContentPage extends Component {
   render(){
 
     return(
-      <div className="content-page">
-        <div className="left-pane">
+      <div className="content-page row">
+        <div className="left-pane col-4">
           <div>
             <ChartOptions />
           </div>
         </div>
 
-        <div className="right-pane">
+        <div className="right-pane col-8">
           <div className="content-pane">
             <ChartPane />
           </div>

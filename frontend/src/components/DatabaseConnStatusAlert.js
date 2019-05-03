@@ -14,7 +14,6 @@ export default class DatabaseConnStatusAlert extends Component {
       }
 
     showAlert() {
-        let errMsg = this.props.dbErrMsg;
         if (this.props.backendConnSuccess) {
             if (this.props.dbQuerySuccess) {
               return (
