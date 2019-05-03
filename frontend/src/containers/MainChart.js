@@ -10,26 +10,38 @@ import errorSpec from '../components/ErrorSpec';
 
 export class MainChart extends Component {
 
-  componentDidMount() {
-    var spec = this._spec();
+  constructor(props) {
+    super(props);
+    this.view = null;
 
+    this.updateView = this.updateView.bind(this);
+  }
+
+  updateView(v) {
+    this.view = v
+  }
+
+  componentDidMount() {
     var data = Immutable.asMutable(this.props.mainChartData, {deep: true});
 
-    console.log(data);
+    var spec = this._spec();
     var divId = `#main-chart`;
 
     vegaEmbed(divId, spec, { "mode": "vega-lite", "actions": false, "renderer": "svg", "config": vlConfig.config })
-      .then(function (res) {
-        try {
-          res.view
-            .insert("countData", data)
-            .run()
-        } catch(error) {
-          console.log(error);
-          vegaEmbed(divId, errorSpec(), {"actions": false, "renderer": "svg"})
-        }
+      .then( (res) => {
+        res.view
+          .insert("countData", data)
+          .runAsync()
+            .then( (val) => {
+              this.updateView(val)
+              val.addSignalListener('grid_x', (name, value) => {
+                console.log('grid_x: ', value)
+              })
+            })        
       })
   }
+
+
 
   _spec() {
     return(
@@ -37,14 +49,20 @@ export class MainChart extends Component {
         // "$schema": "https://vega.github.io/schema/vega-lite/v2.0.json",
         "data": { "name": "countData" },
         "mark": "line",
+        "selection": {
+          "grid": {
+            "type": "interval", "bind": "scales"
+          }
+        },
         "encoding": {
           "x": {
             "field": "x",
-            "type": "temporal",
+            "type": "temporal"
            },
           "y": {
             "field": "y",
-            "type": "quantitative"
+            "type": "quantitative",
+            "scale": {"domain": [0, 150]}
           },
           "color": {
             "value": "#3B5B8C"
