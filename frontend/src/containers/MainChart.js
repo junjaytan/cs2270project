@@ -136,7 +136,21 @@ export class MainChart extends Component {
                 "timeUnit": "utcyearmonthdatehoursminutesseconds"
               },
               "color": {"value": "#000080"},
-              "opacity": {"value": 0.2}
+              "opacity": {"value": 0.2},
+              "tooltip" : [
+                {
+                  "field": "start",
+                  "type": "temporal",
+                  "timeUnit": "utcyearmonthdatehoursminutesseconds",
+                  "title": "Anomaly Start"
+                },
+                {
+                  "field": "end",
+                  "type": "temporal",
+                  "timeUnit": "utcyearmonthdatehoursminutesseconds",
+                  "title": "Anomaly End"
+                }
+              ]
             }
           },
           {
