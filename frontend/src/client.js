@@ -32,10 +32,19 @@ class Client {
   }
 
   async searchData(queryInfo) {
-    console.log("getting data");
+    console.log("searching data");
     let response = await fetch(SERVER_URL + "/data?dataset=" + queryInfo.dataset
       + "&min=" + queryInfo.min
       + "&max=" + queryInfo.max
+      + "&start=" + queryInfo.start
+      + "&end=" + queryInfo.end
+    );
+    return await response;
+  }
+
+  async getRawData(queryInfo) {
+    console.log("getting data");
+    let response = await fetch(SERVER_URL + "/rawdata?dataset=" + queryInfo.dataset
       + "&start=" + queryInfo.start
       + "&end=" + queryInfo.end
     );

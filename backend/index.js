@@ -6,6 +6,8 @@ const port = 8000;
 
 const pgp = require('pg-promise')();
 
+process.env.TZ = 'UTC';
+
 app.use(cors());
 app.use(bodyParser());
 
@@ -144,6 +146,12 @@ function initializeOrResetDB(user, pw, host, port, db, schema) {
       globalDbconn = pgp(pgUri);
   }
   // Otherwise using the same db connection, so don't create another connection.
+}
+
+function stringifyDate(dt) {
+  var res = dt.replace("T", " ")
+  res = res.replace("Z", "")
+  return res
 }
 
 app.post('/datasets', function (req, res) {
@@ -335,6 +343,50 @@ app.get('/data', function (req, res) {
     params = [table, ts_col, anomaly_col, value_col, min, max, start, end];
   }
   console.log(`running segment search query on ${datasetId}`);
+
+  globalDbconn.any(query, params)
+  .then(function (data) {
+    res.status(200);
+    res.send(data);
+  })
+  .catch(function (error) {
+    let errorMsg = String(error);
+    res.status(500);
+    res.send(errorMsg);
+    console.log('ERROR:', error)
+  })
+})
+
+app.get('/rawdata', function (req, res) {
+  let datasetId = req.query.dataset;
+
+  if (!datasetId || !(datasetId in globalDatasets)) {
+    res.status(400);
+    res.send('Missing or unrecognized dataset name. ' +
+             'Please provide query param "dataset"');
+    return;
+  }
+
+  let ts_col = globalDatasets[datasetId].getDateTimeColName();
+  let prev_ts_col = globalDatasets[datasetId].getLaggingTSColName();
+  let anomaly_col = globalDatasets[datasetId].getDetectorRawValuesColName();
+  let value_col = globalDatasets[datasetId].getValueColName();
+  let start = stringifyDate(req.query.start);
+  let end = stringifyDate(req.query.end);
+
+  console.log("start time")
+  console.log(start)
+  console.log("end time")
+  console.log(end)
+
+  let query = `SELECT ${ts_col} as x, ${value_col} as y
+                FROM ${datasetId}
+                WHERE ${ts_col} >= '$1:raw'
+                AND ${ts_col} <= '$2:raw'`;
+  let params = [start, end];
+
+  console.log(`running raw data fetch query on ${datasetId}`);
+  console.log(query);
 
   globalDbconn.any(query, params)
   .then(function (data) {

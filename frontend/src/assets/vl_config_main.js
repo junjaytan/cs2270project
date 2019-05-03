@@ -11,5 +11,6 @@ export var config = {
   },
   "title": {
     "fontSize": 22
-  }
+  },
+  "padding": {"left": 25, "top": 5, "right": 5, "bottom": 25}
 }
