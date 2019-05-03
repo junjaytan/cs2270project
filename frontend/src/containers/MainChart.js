@@ -1,31 +1,83 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import Immutable from 'seamless-immutable';
 import * as selectors from '../reducer';
 import * as actions from '../actions';
 
+import vegaEmbed from 'vega-embed';
+import * as vlConfig from '../assets/vl_config_main';
+import errorSpec from '../components/ErrorSpec';
+
 export class MainChart extends Component {
 
-  // <Spinner loading={true} className="spinner" size={100} />
-  render(){
+  componentDidMount() {
+    var spec = this._spec();
 
+    var data = Immutable.asMutable(this.props.mainChartData, {deep: true});
+
+    console.log(data);
+    var divId = `#main-chart`;
+
+    vegaEmbed(divId, spec, { "mode": "vega-lite", "actions": false, "renderer": "svg", "config": vlConfig.config })
+      .then(function (res) {
+        try {
+          res.view
+            .insert("countData", data)
+            .run()
+        } catch(error) {
+          console.log(error);
+          vegaEmbed(divId, errorSpec(), {"actions": false, "renderer": "svg"})
+        }
+      })
+  }
+
+  _spec() {
     return(
-      <div className="main-chart">
-        { !this.props.mainChart.startTS &&
-          <h5>Use the panel to the left to search for a result to display.</h5>
+      {
+        // "$schema": "https://vega.github.io/schema/vega-lite/v2.0.json",
+        "data": { "name": "countData" },
+        "mark": "line",
+        "encoding": {
+          "x": {
+            "field": "x",
+            "type": "temporal",
+           },
+          "y": {
+            "field": "y",
+            "type": "quantitative"
+          },
+          "color": {
+            "value": "#3B5B8C"
+          },
+          "tooltip" : [
+            {
+              "field": "x",
+              "type": "temporal",
+              "title": "Timestamp"
+            },
+            {
+              "field": "y",
+              "type": "quantitative",
+              "title": "Value"
+            }
+          ]
         }
+      }
+    )
+  }
 
-        { this.props.mainChart.startTS &&
-          <p>I am the main chart, I start at { this.props.mainChart.startTS.toISOString() }</p>
-        }
-      </div>
-    );
+  render() {
+    return(
+      <div id="main-chart"></div>
+    )
   }
 
 }
 
 function mapStateToProps(state) {
   return {
-    mainChart: selectors.getMainChart(state)
+    mainChart: selectors.getMainChart(state),
+    mainChartData: selectors.getMainChartData(state)
   };
 }
 

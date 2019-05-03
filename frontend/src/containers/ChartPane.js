@@ -35,8 +35,9 @@ export class ChartPane extends Component{
     return dataObj
   }
 
-  handleChartChange(start, end) {
+  handleChartChange(start, end, data) {
     this.props.changeMainChart(start, end);
+    this.props.changeMainChartData(data);
     this.props.changeChartPane("mainchart");
   }
 
@@ -50,7 +51,7 @@ export class ChartPane extends Component{
 
     return (
       data.map((val) =>
-        <tr className="chart-mini" key={val.id} onClick={() => this.handleChartChange(val.start_date, val.end_date)} >
+        <tr className="chart-mini" key={val.id} onClick={() => this.handleChartChange(val.start_date, val.end_date, val.data)} >
           <td>{val.start_date.toISOString()}</td>
           <td>{val.end_date.toISOString()}</td>
           <td>{val.number_points}</td>
@@ -123,7 +124,14 @@ export class ChartPane extends Component{
         }
 
         { this.props.chartPane === "mainchart" &&
-          <MainChart />
+          <div>
+            { !this.props.mainChart.startTS ?
+              <h5>Select a results row to explore the surrounding data</h5>
+            :
+              <MainChart/>
+            }
+
+          </div>
         }
 
       </div>
@@ -146,7 +154,8 @@ function mapStateToProps(state) {
 function mapDispatchToProps(dispatch) {
   return {
     changeChartPane: (val) => dispatch(actions.changeChartPane(val)),
-    changeMainChart: (start, end) => dispatch(actions.changeMainChart({startTS: start, endTS: end}))
+    changeMainChart: (start, end) => dispatch(actions.changeMainChart({startTS: start, endTS: end})),
+    changeMainChartData: (data) => dispatch(actions.changeMainChartData(data))
   };
 }
 

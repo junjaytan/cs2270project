@@ -28,7 +28,8 @@ const initialState = Immutable({
   startTS: null,
   endTS: null,
   chartPane: "tsmini",
-  mainChart: { startTS: null, endTS: null }
+  mainChart: { startTS: null, endTS: null },
+  mainChartData: []
 });
 
 
@@ -103,6 +104,10 @@ export default function reduce(state = initialState, action = {}) {
     case 'CHANGE_MAIN_CHART':
       return state.merge({
         mainChart: action.data
+      });
+    case 'CHANGE_MAIN_CHART_DATA':
+      return state.merge({
+        mainChartData: action.data
       });
     case 'CHANGE_ERROR':
       return state.merge({
@@ -179,6 +184,10 @@ export function getChartPane(state) {
 
 export function getMainChart(state) {
   return state.mainChart;
+}
+
+export function getMainChartData(state) {
+  return state.mainChartData;
 }
 
 export function getError(state) {

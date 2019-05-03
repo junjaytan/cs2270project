@@ -69,3 +69,7 @@ export function changeChartPane(data) {
 export function changeMainChart(data) {
   return({ type: 'CHANGE_MAIN_CHART', data})
 }
+
+export function changeMainChartData(data) {
+  return({ type: 'CHANGE_MAIN_CHART_DATA', data})
+}
