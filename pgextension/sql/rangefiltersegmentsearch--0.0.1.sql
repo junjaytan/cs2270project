@@ -203,3 +203,68 @@ BEGIN
     END LOOP;
 END
 $$  LANGUAGE plpgsql;
+
+
+-- This performs a sampled window operation using the average value
+CREATE OR REPLACE FUNCTION window_autosample(_tbl ANYELEMENT, datecol TEXT,
+valuecol_to_passthru TEXT, start_ts TIMESTAMP, end_ts TIMESTAMP, res_width INT,
+res_height INT)
+  RETURNS TABLE (sampled_ts TIMESTAMP, sampled_value NUMERIC) AS
+$$
+DECLARE
+  -- This is a temp variable we use to store as we iterate
+  loop_previous_cur_ts TIMESTAMP := NULL;
+  entries INT;
+  max_points INT := 4 * res_width;  --Some factor of the width
+  datediff_secs BIGINT;
+  bucketsize_secs BIGINT;
+BEGIN
+  EXECUTE format('SELECT COUNT(*) FROM %s WHERE %s >= ''%s'' AND %s <= ''%s''',
+                pg_typeof(_tbl), datecol, start_ts, datecol, end_ts) into entries;
+  IF entries <= max_points THEN
+     RETURN QUERY EXECUTE format('SELECT %s AS ts_datetime, %s FROM %s WHERE %s >= ''%s'' AND %s <= ''%s''',
+                datecol, valuecol_to_passthru, pg_typeof(_tbl), datecol, start_ts, datecol, end_ts);
+  ELSE
+    SELECT EXTRACT(EPOCH FROM end_ts) - EXTRACT(EPOCH FROM start_ts) INTO datediff_secs;
+    bucketsize_secs = datediff_secs / max_points;
+    RETURN QUERY EXECUTE format('SELECT time_bucket(''%s seconds'', %s) AS ts_datetime, AVG(%s) AS %s FROM %s '
+                                'WHERE %s >= ''%s'' AND %s <= ''%s'' '
+                                'GROUP BY ts_datetime ORDER BY ts_datetime',
+                                bucketsize_secs, datecol, valuecol_to_passthru, valuecol_to_passthru,
+                                pg_typeof(_tbl), datecol, start_ts, datecol, end_ts);
+  END IF;
+END
+$$  LANGUAGE plpgsql;
+
+-- Same as above, but passing through two columns
+CREATE OR REPLACE FUNCTION window_autosample(_tbl ANYELEMENT, datecol TEXT,
+valuecol_to_passthru TEXT, valuecol_to_passthru2 TEXT, start_ts TIMESTAMP, end_ts TIMESTAMP, res_width INT,
+res_height INT)
+  RETURNS TABLE (sampled_ts TIMESTAMP, sampled_value NUMERIC, sampled_value2 NUMERIC) AS
+$$
+DECLARE
+  -- This is a temp variable we use to store as we iterate
+  loop_previous_cur_ts TIMESTAMP := NULL;
+  entries INT;
+  max_points INT := 4 * res_width;  --Some factor of the width
+  datediff_secs BIGINT;
+  bucketsize_secs BIGINT;
+BEGIN
+  EXECUTE format('SELECT COUNT(*) FROM %s WHERE %s >= ''%s'' AND %s <= ''%s''',
+                pg_typeof(_tbl), datecol, start_ts, datecol, end_ts) into entries;
+  IF entries <= max_points THEN
+     RETURN QUERY EXECUTE format('SELECT %s AS ts_datetime, %s, %s FROM %s WHERE %s >= ''%s'' AND %s <= ''%s''',
+                datecol, valuecol_to_passthru, valuecol_to_passthru2, pg_typeof(_tbl), datecol, start_ts, datecol, end_ts);
+  ELSE
+    SELECT EXTRACT(EPOCH FROM end_ts) - EXTRACT(EPOCH FROM start_ts) INTO datediff_secs;
+    bucketsize_secs = datediff_secs / max_points;
+    RETURN QUERY EXECUTE format('SELECT time_bucket(''%s seconds'', %s) AS ts_datetime, AVG(%s) AS %s, '
+                                'AVG(%s) AS %s FROM %s '
+                                'WHERE %s >= ''%s'' AND %s <= ''%s'' '
+                                'GROUP BY ts_datetime ORDER BY ts_datetime',
+                                bucketsize_secs, datecol, valuecol_to_passthru, valuecol_to_passthru,
+                                valuecol_to_passthru2, valuecol_to_passthru2,
+                                pg_typeof(_tbl), datecol, start_ts, datecol, end_ts);
+  END IF;
+END
+$$  LANGUAGE plpgsql;
