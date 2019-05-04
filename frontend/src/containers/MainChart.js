@@ -70,10 +70,17 @@ export class MainChart extends Component {
   componentDidMount() {
     this.data = Immutable.asMutable(this.props.mainChartData, {deep: true});
 
-    var spec = this._spec(this.anomalyStart, this.anomalyEnd);
+    var minA = Number(this.props.stats.detectorMin)
+    var maxA = Number(this.props.stats.detectorMax)
+
+    var spec = this._spec(this.anomalyStart, this.anomalyEnd, minA, maxA);
     var divId = `#main-chart`;
 
-    vegaEmbed(divId, spec, { "mode": "vega-lite", "actions": false, "renderer": "svg", "config": vlConfig.config })
+    console.log(this.data)
+    console.log(this.anomalyStart)
+    console.log(this.anomalyEnd)
+
+    vegaEmbed(divId, spec, { "mode": "vega-lite", "actions": false, "renderer": "canvas", "config": vlConfig.config })
       .then( (res) => {
         res.view
           .insert("countData", this.data)
@@ -90,6 +97,7 @@ export class MainChart extends Component {
 
   componentDidUpdate() {
     var newData = Immutable.asMutable(this.props.mainChartData, {deep: true});
+    console.log(newData)
 
     this.view
       .change("countData",
@@ -107,90 +115,116 @@ export class MainChart extends Component {
     this.view.finalize()
   }
 
-  _spec(start, end) {
+  _spec(start, end, minA, maxA) {
     return(
       {
         // "$schema": "https://vega.github.io/schema/vega-lite/v2.0.json",
         "autosize": "pad",
         "data": { "name": "countData" },
-        "layer": [
+        "vconcat": [
           {
-            "mark": "rect",
-            "data": {
-              "values": [
-                {
-                  "start": start,
-                  "end": end
-                }
-              ]
-            },
-            "encoding": {
-              "x": {
-                "field": "start",
-                "type": "temporal",
-                "timeUnit": "utcyearmonthdatehoursminutesseconds",
-                "axis": null
-              },
-              "x2": {
-                "field": "end",
-                "timeUnit": "utcyearmonthdatehoursminutesseconds"
-              },
-              "color": {"value": "#000080"},
-              "opacity": {"value": 0.2},
-              "tooltip" : [
-                {
-                  "field": "start",
-                  "type": "temporal",
-                  "timeUnit": "utcyearmonthdatehoursminutesseconds",
-                  "title": "Anomaly Start"
+            "layer": [
+              {
+                "mark": "rect",
+                "data": {
+                  "values": [
+                    {
+                      "start": start,
+                      "end": end
+                    }
+                  ]
                 },
-                {
-                  "field": "end",
-                  "type": "temporal",
-                  "timeUnit": "utcyearmonthdatehoursminutesseconds",
-                  "title": "Anomaly End"
+                "encoding": {
+                  "x": {
+                    "field": "start",
+                    "type": "temporal",
+                    "timeUnit": "utcyearmonthdatehoursminutesseconds",
+                    "axis": null
+                  },
+                  "x2": {
+                    "field": "end",
+                    "timeUnit": "utcyearmonthdatehoursminutesseconds"
+                  },
+                  "color": {"value": "#000080"},
+                  "opacity": {"value": 0.2},
+                  "tooltip" : [
+                    {
+                      "field": "start",
+                      "type": "temporal",
+                      "timeUnit": "utcyearmonthdatehoursminutesseconds",
+                      "title": "Anomaly Start"
+                    },
+                    {
+                      "field": "end",
+                      "type": "temporal",
+                      "timeUnit": "utcyearmonthdatehoursminutesseconds",
+                      "title": "Anomaly End"
+                    }
+                  ]
                 }
-              ]
-            }
+              },
+              {
+                "mark": "line",
+                "selection": {
+                  "grid": {
+                    "type": "interval", "bind": "scales"
+                  }
+                },
+                "encoding": {
+                  "x": {
+                    "field": "x",
+                    "timeUnit": "utcyearmonthdatehoursminutesseconds",
+                    "type": "temporal",
+                    "axis": {
+                      "formatType": "time",
+                      "format": "%Y-%m-%d %H:%M",
+                      "tickCount": 2,
+                      "tickSize": 1
+                    }
+                  },
+                  "y": {
+                    "field": "y",
+                    "type": "quantitative"
+                  },
+                  "color": {
+                    "value": "#3B5B8C"
+                  },
+                  "tooltip" : [
+                    {
+                      "field": "x",
+                      "type": "temporal",
+                      "timeUnit": "utcyearmonthdatehoursminutesseconds",
+                      "title": "Timestamp"
+                    },
+                    {
+                      "field": "y",
+                      "type": "quantitative",
+                      "title": "Data Value"
+                    },
+                    {
+                      "field": "a",
+                      "type": "quantitative",
+                      "title": "Anomaly Value"
+                    }
+                  ]
+                }
+              }
+            ]
           },
           {
-            "mark": "line",
-            "selection": {
-              "grid": {
-                "type": "interval", "bind": "scales"
-              }
-            },
+            "height": 50,
+            "mark": "area",
             "encoding": {
               "x": {
                 "field": "x",
                 "timeUnit": "utcyearmonthdatehoursminutesseconds",
                 "type": "temporal",
-                "axis": {
-                  "formatType": "time",
-                  "format": "%Y-%m-%d %H:%M",
-                  "tickCount": 2,
-                  "tickSize": 1
-                }
-               },
+                "axis": null
+              },
               "y": {
-                "field": "y",
+                "field": "a",
                 "type": "quantitative"
-              },
-              "color": {
-                "value": "#3B5B8C"
-              },
-              "tooltip" : [
-                {
-                  "field": "x",
-                  "type": "temporal",
-                  "title": "Timestamp"
-                },
-                {
-                  "field": "y",
-                  "type": "quantitative",
-                  "title": "Value"
-                }
-              ]
+              }
             }
           }
         ],
@@ -213,7 +247,8 @@ function mapStateToProps(state) {
   return {
     mainChart: selectors.getMainChart(state),
     mainChartData: selectors.getMainChartData(state),
-    selectedDataset: selectors.getSelectedDataset(state)
+    selectedDataset: selectors.getSelectedDataset(state),
+    stats: selectors.getStats(state)
   };
 }
 

@@ -17,21 +17,20 @@ export class ChartPane extends Component{
 
   // transform query return to x, y coordinates
   transformedData(data, id) {
-    var newData = []
     var startDate = new Date(data.start_date)
     var endDate = new Date(data.end_date)
-    var totTime = endDate - startDate
     var n = data.number_points
-    var spanLength = totTime / (n -1)
 
-    var dt = startDate
-    _.forEach(data.json_agg, (val) => {
-      newData.push({"x": dt, "y": val})
-      dt = new Date(dt.valueOf() + spanLength)
+    console.log(data)
+
+    var newData = _.zipWith(data.ts_agg, data.json_agg, data.anom_agg, (ts, val, anom) => {
+      var dt = new Date(ts + 'Z')
+      return {"x": dt, "y": val, "a": anom}
     })
 
-    var dataObj = {"data": newData, "id": `tsdata-`+id, "start_date": startDate, "end_date": endDate, "number_points": n}
+    console.log(newData)
 
+    var dataObj = {"data": newData, "id": `tsdata-`+id, "start_date": startDate, "end_date": endDate, "number_points": n}
     return dataObj
   }
 

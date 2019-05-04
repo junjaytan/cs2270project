@@ -325,7 +325,8 @@ app.get('/data', function (req, res) {
     // If there is an additional column with lagging timestamp, run the appropriate
     // faster function
     query = `SELECT segment_start_ts as start_date, MAX(cur_ts) AS end_date,
-    COUNT(*) AS number_points, json_agg(value_to_passthru ORDER BY cur_ts) AS json_agg
+    COUNT(*) AS number_points, json_agg(value_to_passthru ORDER BY cur_ts) AS json_agg,
+    json_agg(value_to_filter ORDER BY cur_ts) AS anom_agg, json_agg(cur_ts ORDER BY cur_ts) as ts_agg
     FROM filter_segments($1:raw, $2, $3, $8, $9, $4, $5, $6, $7)
     GROUP BY segment_start_ts
     ORDER BY number_points DESC
@@ -333,7 +334,8 @@ app.get('/data', function (req, res) {
     params = [table, ts_col, prev_ts_col, anomaly_col, value_col, min, max, start, end];
   } else {
     query = `SELECT segment_start_ts as start_date, MAX(cur_ts) AS end_date,
-    COUNT(*) AS number_points, json_agg(value_to_passthru ORDER BY cur_ts) AS json_agg
+    COUNT(*) AS number_points, json_agg(value_to_passthru ORDER BY cur_ts) AS json_agg,
+    json_agg(value_to_filter ORDER BY cur_ts) AS anom_agg, json_agg(cur_ts ORDER BY cur_ts) as ts_agg 
     FROM filter_segments($1:raw, $2, $3, $4, $5, $6)
     WHERE segment_start_ts >= $7
     AND segment_start_ts <= $8
@@ -379,7 +381,7 @@ app.get('/rawdata', function (req, res) {
   console.log("end time")
   console.log(end)
 
-  let query = `SELECT ${ts_col} as x, ${value_col} as y
+  let query = `SELECT ${ts_col} as x, ${value_col} as y, ${anomaly_col} as a
                 FROM ${datasetId}
                 WHERE ${ts_col} >= '$1:raw'
                 AND ${ts_col} <= '$2:raw'`;

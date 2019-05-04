@@ -128,7 +128,9 @@ function* fetchRawData(action) {
       respBody = yield resp.json();
       var data = respBody.map((val) => {
         var newX = new Date(val.x)
-        return {x: newX, y: val.y}
+        var newY = Number(val.y)
+        var newA = Number(val.a)
+        return {x: newX, y: newY, a: newA}
       });
       yield put(actions.changeMainChartData(data));
       yield put(actions.changeMainChart({startTS: action.payload.start, endTS: action.payload.end }))
