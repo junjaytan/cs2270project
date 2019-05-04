@@ -13,9 +13,9 @@ CREATE TABLE "anomaly_meta"(
 );
 
 --Note: threshold of 70 means about 2.2% of data points are anomalies
-INSERT INTO anomaly_meta VALUES ('ecg_data', 'ecg_datetime', 'anomaly_likelihood', 'ecg_mv', 78, '>=');
+INSERT INTO anomaly_meta VALUES ('ecg_data', 'ecg_datetime', 'anomaly_likelihood', 'ecg_mv', 120, '>=');
 -- note: current max value is 272.25
-INSERT INTO anomaly_meta VALUES ('ecg_data_with_lag', 'ecg_datetime', 'anomaly_likelihood', 'ecg_mv', 78, '>=',
+INSERT INTO anomaly_meta VALUES ('ecg_data_with_lag', 'ecg_datetime', 'anomaly_likelihood', 'ecg_mv', 120, '>=',
 								 'ecg_datetime_prev');
 
 INSERT INTO anomaly_meta VALUES ('sinewaves_data', 'my_datetime', 'sine1_value', 'sine2_value', 8.5, '>=');

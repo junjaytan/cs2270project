@@ -4,7 +4,7 @@ semi-realistic.
 This will read in the output from ecgsyn: https://physionet.org/physiotools/ecgsyn/C/
 
 The ECGSYN used to generate data (with noise) was:
-    ./ecgsyn -O largedata2.txt -n 100000 -a 0.1
+    ./ecgsyn -O largedata3.txt -n 100000 -a 0.1
 This generates about 33M data points.
 (Note that using larger than this crashes the program)
 
@@ -51,7 +51,8 @@ def process_file(filepath, outfilepath, chunksize=10000, show_plot=False):
     start_time = datetime.datetime(2018, 1, 1, 9, 0, 0)  # times rel to this
     # If processing a second file to append to first, make sure to continue on
     # the subsequent datetime!
-    #start_time = datetime.datetime(2018, 1, 24, 17, 41, 23)  # times rel to this
+    # start_time = datetime.datetime(2019, 1, 24, 17, 41, 23)  # batch 2
+    # start_time = datetime.datetime(2020, 2, 17, 2, 22, 46)  # batch 3
 
     # How long each anomalous segment can be
     min_anom_length = 10
@@ -104,7 +105,7 @@ def process_file(filepath, outfilepath, chunksize=10000, show_plot=False):
                 anom_lengths.append(cur_anom_length)
                 total_anom_length += cur_anom_length
 
-            anom_start_idxs = []
+            anom_start_idxs = []  # Holds a list of anomalous segments (tuples representing start,end)
             for i in range(0, len(anom_lengths)):
                 anom_start_idxs.append(random.randint(0, len(df_chunk)))
 
@@ -170,7 +171,7 @@ def process_file(filepath, outfilepath, chunksize=10000, show_plot=False):
                 detector_raw_value_increase = random.randint(40, 100)
                 detector_raw_value_increase = (
                         detector_raw_value_increase * (1.0 + shift_normalized))
-                df_moving_avg_nparray[anom_start_idx:idx+anom_start_idx] += detector_raw_value_increase
+                df_moving_avg_nparray[anom_start_idx:anom_start_idx + anom_length] += detector_raw_value_increase
 
             # Get rid of some digits after decimal
             processed_raw_data_df = pd.DataFrame(df_raw_data_nparray).round(3)
@@ -185,9 +186,14 @@ def process_file(filepath, outfilepath, chunksize=10000, show_plot=False):
             if show_plot and chunk_count == 1:
                 fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
                 ax1.plot(df_raw_data_nparray)
+                ax1.set_ylabel('ECG value (mv)')
                 ax2.plot(df_moving_avg_nparray)
+                ax2.set_ylabel('Detector output value (likelihood)')
                 ax3.plot(anomaly_truth)
-                plt.show()
+                ax3.set_ylabel('anomaly')
+                plt.tight_layout()
+                plt.savefig('syntheticdata_plot.png')
+                return
 
             cur_time = cur_time + datetime.timedelta(seconds=num_entries)
             chunk_count += 1
@@ -204,10 +210,11 @@ if __name__ == '__main__':
     parser.add_argument('--inputfile', action='store', dest='inputfile',
                         required=True, help='Full path to ECGSYN generated file')
     parser.add_argument('--outputfile', type=str, required=True, help='Full path to outputfile')
+    parser.add_argument('--plot', dest='showplot', default=False, action='store_true', help='If specified, plots an example chunk and stops further processing')
     parser.add_argument(
         '--chunksize', type=int, default=1000000,
         help='Number of records from ECGSYN file to process per chunk.')
     parserargs = parser.parse_args()
 
 
-    process_file(parserargs.inputfile, parserargs.outputfile, chunksize=parserargs.chunksize)
+    process_file(parserargs.inputfile, parserargs.outputfile, chunksize=parserargs.chunksize, show_plot=parserargs.showplot)
