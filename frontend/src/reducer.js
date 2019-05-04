@@ -34,8 +34,8 @@ const initialState = Immutable({
 
 
 export default function reduce(state = initialState, action = {}) {
-  console.log(state);
-  console.log(action);
+  // console.log(state);
+  // console.log(action);
   switch (action.type) {
     case 'CHANGE_DATA':
       return state.merge({

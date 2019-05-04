@@ -1,4 +1,4 @@
-import { takeEvery, call, put, all } from 'redux-saga/effects';
+import { takeLatest, takeEvery, call, put, all } from 'redux-saga/effects';
 import Client from './client';
 import * as actions from './actions'
 
@@ -110,13 +110,45 @@ function* searchData(action) {
   }
 }
 
+function* fetchRawData(action) {
+
+  try {
+    const resp = yield call(Client.getRawData, action.payload);
+    let httpstatus = resp.status;
+    let querySuccess = null;
+    let respBody = null;
+    let queryErrText = '';
+
+    if (httpstatus !== 200) {
+      querySuccess = false;
+      respBody = yield resp.text();
+      queryErrText = respBody;
+    } else {
+      querySuccess = true;
+      respBody = yield resp.json();
+      var data = respBody.map((val) => {
+        var newX = new Date(val.x)
+        return {x: newX, y: val.y}
+      });
+      yield put(actions.changeMainChartData(data));
+      yield put(actions.changeMainChart({startTS: action.payload.start, endTS: action.payload.end }))
+    }
+    yield put(actions.changeDbQuerySuccess(querySuccess))
+    yield put(actions.changeDbErrorMsg(queryErrText));
+  } catch(error) {
+    // Backend is not available!
+    yield put(actions.changeBackendConnSuccess(false));
+  }
+}
+
 // -------------ROOT SAGA-----------------
 
 export default function* rootSaga() {
   yield all([
     takeEvery('FETCH_DATASETS', fetchDatasets),
     takeEvery('FETCH_STATS', fetchStats),
-    takeEvery('SEARCH_DATA', searchData)
+    takeEvery('SEARCH_DATA', searchData),
+    takeLatest('FETCH_RAW_DATA', fetchRawData)
   ])
 
 }
