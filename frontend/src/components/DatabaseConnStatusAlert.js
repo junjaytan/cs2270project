@@ -7,7 +7,7 @@ import { Alert } from 'reactstrap';
  */
 export default class DatabaseConnStatusAlert extends Component {
     constructor(props) {
-        console.log("calling");
+        // console.log("calling");
         super(props);
 
         this.showAlert.bind(this);

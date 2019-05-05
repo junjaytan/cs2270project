@@ -21,14 +21,14 @@ export class ChartPane extends Component{
     var endDate = new Date(data.end_date)
     var n = data.number_points
 
-    console.log(data)
+    // console.log(data)
 
     var newData = _.zipWith(data.ts_agg, data.json_agg, data.anom_agg, (ts, val, anom) => {
       var dt = new Date(ts + 'Z')
       return {"x": dt, "y": val, "a": anom}
     })
 
-    console.log(newData)
+    // console.log(newData)
 
     var dataObj = {"data": newData, "id": `tsdata-`+id, "start_date": startDate, "end_date": endDate, "number_points": n}
     return dataObj

@@ -46,19 +46,19 @@ export class MainChart extends Component {
       end = end - offset
 
       if ((dataEnd - dataStart) - length < 1000) {
-        console.log("increasing buffer")
+        // console.log("increasing buffer")
         var startTS = new Date(start - 2*length).toISOString()
         var endTS = new Date(end + 2*length).toISOString()
         this.props.changeData(this.props.selectedDataset, startTS, endTS)
         this.updateUpdating(true);
       } else if (start - dataStart < length) {
-        console.log("start triggered shit")
+        // console.log("start triggered shit")
         var startTS = new Date(start - 2*length).toISOString()
         var endTS = new Date(end - 2*length).toISOString()
         this.props.changeData(this.props.selectedDataset, startTS, endTS)
         this.updateUpdating(true);
       } else if (dataEnd - end < length) {
-        console.log("end triggered shift")
+        // console.log("end triggered shift")
         var startTS = new Date(start + 2*length).toISOString()
         var endTS = new Date(end + 2*length).toISOString()
         this.props.changeData(this.props.selectedDataset, startTS, endTS)
@@ -80,7 +80,7 @@ export class MainChart extends Component {
           .runAsync()
             .then( (val) => {
               this.updateView(val)
-              console.log(val)
+              // console.log(val)
               val.addSignalListener('grid_utcyearmonthdatehoursminutesseconds_x', (name, value) => {
                 this.evaluateFetchdata(...value)
               })
@@ -90,7 +90,7 @@ export class MainChart extends Component {
 
   componentDidUpdate() {
     var newData = Immutable.asMutable(this.props.mainChartData, {deep: true});
-    console.log(newData)
+    // console.log(newData)
 
     this.view
       .change("countData",

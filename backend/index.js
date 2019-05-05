@@ -335,7 +335,7 @@ app.get('/data', function (req, res) {
   } else {
     query = `SELECT segment_start_ts as start_date, MAX(cur_ts) AS end_date,
     COUNT(*) AS number_points, json_agg(value_to_passthru ORDER BY cur_ts) AS json_agg,
-    json_agg(value_to_filter ORDER BY cur_ts) AS anom_agg, json_agg(cur_ts ORDER BY cur_ts) as ts_agg 
+    json_agg(value_to_filter ORDER BY cur_ts) AS anom_agg, json_agg(cur_ts ORDER BY cur_ts) as ts_agg
     FROM filter_segments($1:raw, $2, $3, $4, $5, $6)
     WHERE segment_start_ts >= $7
     AND segment_start_ts <= $8
@@ -369,22 +369,30 @@ app.get('/rawdata', function (req, res) {
     return;
   }
 
+  // TODO: pass these as query parameters
+  let windowHeight = 100;
+  let windowWidth = 400;
+
   let ts_col = globalDatasets[datasetId].getDateTimeColName();
   let prev_ts_col = globalDatasets[datasetId].getLaggingTSColName();
   let anomaly_col = globalDatasets[datasetId].getDetectorRawValuesColName();
   let value_col = globalDatasets[datasetId].getValueColName();
   let start = stringifyDate(req.query.start);
   let end = stringifyDate(req.query.end);
+  let table = 'NULL::' + globalDbSchema + '.' + datasetId;
 
   console.log("start time")
   console.log(start)
   console.log("end time")
   console.log(end)
 
-  let query = `SELECT ${ts_col} as x, ${value_col} as y, ${anomaly_col} as a
-                FROM ${datasetId}
-                WHERE ${ts_col} >= '$1:raw'
-                AND ${ts_col} <= '$2:raw'`;
+  //let query = `SELECT ${ts_col} as x, ${value_col} as y, ${anomaly_col} as a
+  //              FROM ${datasetId}
+  //              WHERE ${ts_col} >= '$1:raw'
+  //              AND ${ts_col} <= '$2:raw'`;
+  let query = `SELECT sampled_ts as x, sampled_value as y, sampled_value2 as a
+                FROM window_autosample(${table}, '${ts_col}', '${value_col}', '${anomaly_col}',
+                '$1:raw', '$2:raw', ${windowWidth}, ${windowHeight})`;
   let params = [start, end];
 
   console.log(`running raw data fetch query on ${datasetId}`);
