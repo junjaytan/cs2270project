@@ -70,15 +70,8 @@ export class MainChart extends Component {
   componentDidMount() {
     this.data = Immutable.asMutable(this.props.mainChartData, {deep: true});
 
-    var minA = Number(this.props.stats.detectorMin)
-    var maxA = Number(this.props.stats.detectorMax)
-
-    var spec = this._spec(this.anomalyStart, this.anomalyEnd, minA, maxA);
+    var spec = this._spec(this.anomalyStart, this.anomalyEnd);
     var divId = `#main-chart`;
-
-    console.log(this.data)
-    console.log(this.anomalyStart)
-    console.log(this.anomalyEnd)
 
     vegaEmbed(divId, spec, { "mode": "vega-lite", "actions": false, "renderer": "canvas", "config": vlConfig.config })
       .then( (res) => {
@@ -115,7 +108,7 @@ export class MainChart extends Component {
     this.view.finalize()
   }
 
-  _spec(start, end, minA, maxA) {
+  _spec(start, end) {
     return(
       {
         // "$schema": "https://vega.github.io/schema/vega-lite/v2.0.json",
